@@ -2,6 +2,8 @@ set(SourceFiles
 	Read.cpp
 	Parse.cpp
 	Utils.cpp
+	Coordinate.cpp
+	Location.cpp
 	)
 
 add_library(thalwegCommon STATIC

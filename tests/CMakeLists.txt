@@ -4,6 +4,7 @@ set(TestFiles
 	ParseTest.cpp
 	ReadTest.cpp
 	UtilsTest.cpp
+	CoordinateTest.cpp
 	)
 
 add_executable(thalwegTest

@@ -53,26 +53,4 @@ auto read_corners(std::istream& contents) -> std::vector<Coordinate>
 	return out;
 }
 
-auto operator==(Coordinate const& lhs, Coordinate const& rhs) -> bool
-{
-	return lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude;
-}
-
-auto operator<<(std::ostream& os, Coordinate const& value) -> std::ostream&
-{
-	os << "Coordinate{latitude:" << value.latitude << ", longitude:" << value.longitude << "}";
-	return os;
-}
-
-auto operator==(Location const& lhs, Location const& rhs) -> bool
-{
-	return lhs.coord == rhs.coord && lhs.depth == rhs.depth;
-}
-
-auto operator<<(std::ostream& os, Location const& value) -> std::ostream&
-{
-	os << "Location:{coord:" << value.coord << ", depth:" << value.depth << "}";
-	return os;
-}
-
 }

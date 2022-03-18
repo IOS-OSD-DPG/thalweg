@@ -1,10 +1,10 @@
+#include "Read.hpp"
+
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include "Read.hpp"
 
 namespace fs = std::filesystem;
 
