@@ -32,7 +32,14 @@ TEST_CASE("distance_between (0, 0) and (1, 1) is ~157km")
 {
 	auto const point1 = Coordinate{0, 0};
 	auto const point2 = Coordinate{1, 1};
-	CHECK((distance_between(point1, point2) / 1000) == doctest::Approx(157).epsilon(1));
+	CHECK((distance_between(point1, point2) / 1000) == doctest::Approx(157).epsilon(0.002));
+}
+
+TEST_CASE("distance_between (49.4678, -122.883) and (49.2989, -122.94) is ~19km")
+{
+	auto const point1 = Coordinate{49.4678, -122.883};
+	auto const point2 = Coordinate{49.2989, -122.94};
+	CHECK((distance_between(point1, point2) / 1000) == doctest::Approx(19).epsilon(0.02));
 }
 
 TEST_CASE("distance_between (0, 0) and all corners of a square are roughly equal")
@@ -60,7 +67,7 @@ TEST_CASE("closest_point returns a value in the collection")
 {
 	auto const point = Coordinate{0, 0};
 	auto const collection = std::vector<Coordinate> {
-		Coordinate { 1, 1 },
+		Coordinate{1, 1},
 	};
 	CHECK(closest_point(point, collection) == Coordinate{1, 1});
 }

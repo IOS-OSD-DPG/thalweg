@@ -31,7 +31,7 @@ auto distance_between(Coordinate const& lhs, Coordinate const& rhs) -> double
 	auto const phi_left = lhs.latitude * to_radians;
 	auto const phi_right = rhs.latitude * to_radians;
 
-	auto const delta_phi = (rhs.latitude - lhs.longitude) * to_radians;
+	auto const delta_phi = (rhs.latitude - lhs.latitude) * to_radians;
 	auto const delta_lambda = (rhs.longitude - lhs.longitude) * to_radians;
 
 	auto const hav_phi = haversine(delta_phi);
