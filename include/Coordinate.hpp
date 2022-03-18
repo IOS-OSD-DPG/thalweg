@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
 
 namespace thalweg
 {
@@ -9,8 +10,11 @@ namespace thalweg
 		double latitude;
 		double longitude;
 	};
-	auto distance_between(Coordinate const& lhs, Coordinate const& rhs) -> double;
 
-	auto operator==(Coordinate const& lhs, Coordinate const& rhs) -> bool;
-	auto operator<<(std::ostream& os, Coordinate const& value) -> std::ostream&;
+	auto distance_between(Coordinate const&, Coordinate const&) -> double;
+
+	auto closest_point(Coordinate const&, std::vector<Coordinate> const&) -> Coordinate;
+
+	auto operator==(Coordinate const&, Coordinate const&) -> bool;
+	auto operator<<(std::ostream&, Coordinate const&) -> std::ostream&;
 }

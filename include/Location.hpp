@@ -11,6 +11,6 @@ namespace thalweg
 		Coordinate coord;
 		double depth;
 	};
-	auto operator==(Location const& lhs, Location const& rhs) -> bool;
-	auto operator<<(std::ostream& os, Location const& value) -> std::ostream&;
+	auto operator==(Location const&, Location const&) -> bool;
+	auto operator<<(std::ostream&, Location const&) -> std::ostream&;
 }

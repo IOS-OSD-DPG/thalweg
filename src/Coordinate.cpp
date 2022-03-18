@@ -38,11 +38,31 @@ auto distance_between(Coordinate const& lhs, Coordinate const& rhs) -> double
 	auto const hav_lambda = haversine(delta_lambda);
 	auto const hav_theta = hav_phi + std::cos(phi_left) * std::cos(phi_right) * hav_lambda;
 
-	//????????
 	auto const angular_distance = 2 * std::atan2(std::sqrt(hav_theta), std::sqrt(1 - hav_theta));
 	auto const distance_m = earth_radius_m * angular_distance;
 
 	return distance_m;
+}
+
+auto closest_point(Coordinate const& point, std::vector<Coordinate> const& collection) -> Coordinate
+{
+	if (collection.size() == 0)
+		throw std::runtime_error("empty collection");
+
+	auto best_distance = std::numeric_limits<double>::infinity();
+	auto best_point = point;
+
+	for (auto const& elem : collection)
+	{
+		auto const new_distance = distance_between(point, elem);
+		if (new_distance < best_distance)
+		{
+			best_distance = new_distance;
+			best_point = elem;
+		}
+	}
+
+	return best_point;
 }
 
 auto operator==(Coordinate const& lhs, Coordinate const& rhs) -> bool
