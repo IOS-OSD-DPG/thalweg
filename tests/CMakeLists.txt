@@ -1,5 +1,3 @@
-include(CTest)
-
 set(TestFiles
 	ParseTest.cpp
 	ReadTest.cpp
