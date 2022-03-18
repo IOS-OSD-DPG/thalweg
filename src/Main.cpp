@@ -145,5 +145,28 @@ auto main(int argc, char** argv) -> int
 	// TODO: use files in thalweg generation
 	std::cout << "Read " << data.size() << " data points and " << corners.size() << " corners\n";
 
+	std::cout << "Corners indicate an inlet with the following sections:\n";
+	for (size_t i = 0; i < corners.size() - 1; ++i)
+	{
+		auto const& start = corners[i];
+		auto const& end = corners[i+1];
+		auto const distance = thalweg::distance_between(start, end);
+		std::cout
+			<< "between " << start << " and " << end << " for a distance of " << (distance / 1000) << "km\n";
+	}
+
+	std::vector<thalweg::Coordinate> locations;
+	std::transform(
+		data.begin(),
+		data.end(),
+		std::back_inserter(locations),
+		[](thalweg::Location loc) { return loc.coord; });
+	for (auto const& corner : corners)
+	{
+		auto const closest = thalweg::closest_point(corner, locations);
+		std::cout
+			<< "The closest point to " << corner << " that could be found was " << closest << std::endl;
+	}
+
 	return 0;
 }
