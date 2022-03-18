@@ -1,12 +1,15 @@
 #include "Coordinate.hpp"
 
 #include <cmath>
+
+#include <algorithm>
 #include <numbers>
 
 namespace
 {
 
-double constexpr earth_radius_m = 6.3781e6;
+// global average
+double constexpr earth_radius_m = 6.371e6;
 
 auto haversine(double delta) -> double
 {
@@ -25,7 +28,7 @@ auto distance_between(Coordinate const& lhs, Coordinate const& rhs) -> double
 	if (lhs == rhs)
 		return 0.0;
 	// haversine formula taken from https://movable-type.co.uk/scripts/latlong.html and https://en.wikipedia.org/wiki/Haversine_formula
-	auto const to_radians = std::numbers::pi / 180;
+	auto constexpr to_radians = std::numbers::pi / 180;
 
 	// phi denotes latitude in radians, lambda denotes longitude in radians
 	auto const phi_left = lhs.latitude * to_radians;
@@ -36,9 +39,12 @@ auto distance_between(Coordinate const& lhs, Coordinate const& rhs) -> double
 
 	auto const hav_phi = haversine(delta_phi);
 	auto const hav_lambda = haversine(delta_lambda);
-	auto const hav_theta = hav_phi + std::cos(phi_left) * std::cos(phi_right) * hav_lambda;
+	// not sure if the resolution concerns with cosine are significant enough in this case
+	// auto const coefficient = std::cos(phi_left) * std::cos(phi_right);
+	auto const coefficient = 1 - haversine(phi_left - phi_right) - haversine(phi_left + phi_right);
+	auto const hav_theta = hav_phi + coefficient * hav_lambda;
 
-	auto const angular_distance = 2 * std::atan2(std::sqrt(hav_theta), std::sqrt(1 - hav_theta));
+	auto const angular_distance = 2 * std::asin(std::sqrt(hav_theta));
 	auto const distance_m = earth_radius_m * angular_distance;
 
 	return distance_m;
