@@ -1,3 +1,4 @@
+#include "Graph.hpp"
 #include "Read.hpp"
 
 #include <filesystem>
@@ -170,7 +171,7 @@ auto main(int argc, char** argv) -> int
 		auto const distance = thalweg::distance_between(start, end);
 		// clang-format off
 		std::cout
-			<< "between " << start << " and " << end << " for a distance of " << (distance / 1000) << "km\n";
+			<< "Between " << start << " and " << end << " for a distance of " << (distance / 1000) << "km\n";
 		// clang-format on
 	}
 
@@ -184,6 +185,15 @@ auto main(int argc, char** argv) -> int
 	{
 		auto const closest = thalweg::closest_point(corner, locations);
 		std::cout << "The closest point to " << corner << " that could be found was " << closest << std::endl;
+	}
+
+	thalweg::Graph graph(data, resolution);
+	std::cout << "Performing shortest path search\n";
+	auto path = graph.shortest_path(corners[0], corners[1]);
+
+	for (auto const& node : path)
+	{
+		std::cout << node << std::endl;
 	}
 
 	return 0;
