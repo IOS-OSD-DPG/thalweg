@@ -1,20 +1,15 @@
 #include "Parse.hpp"
-
 #include "Utils.hpp"
 
-#include <cstdlib>
 #include <algorithm>
+#include <cstdlib>
 #include <stdexcept>
 #include <vector>
 
 namespace
 {
 
-auto get_dms_coord(
-	std::string const& value,
-	int bound,
-	bool negate)
--> double
+auto get_dms_coord(std::string const& value, int bound, bool negate) -> double
 {
 	double out;
 	auto split_vals = thalweg::utils::split(value, '-');
@@ -48,7 +43,12 @@ auto dash_only_at_start(std::string const& value) -> bool
 		return total == 0;
 }
 
+auto is_legal_in_number(char c) -> bool
+{
+	return c == '-' || c == '.' || (c >= '0' && c <= '9');
 }
+
+} // namespace
 
 namespace thalweg
 {
@@ -89,15 +89,11 @@ auto parse_dms_longitude(std::string const& longitude) -> double
 
 auto parse_depth(std::string const& value) -> double
 {
-	bool all_legal = std::all_of(
-		value.begin(),
-		value.end(),
-		[](char c) { return c == '-' || c == '.' || (c >= '0' && c <= '9'); }
-		);
+	bool all_legal = std::all_of(value.begin(), value.end(), is_legal_in_number);
 	bool only_one_decimal = std::count(value.begin(), value.end(), '.') <= 1;
 	if (!all_legal || !only_one_decimal || !dash_only_at_start(value))
 		throw std::runtime_error(value + " is not a legal double");
 	return std::stod(value);
 }
 
-}
+} // namespace thalweg

@@ -20,5 +20,5 @@ auto split(std::string const& s, char c) -> std::vector<std::string>
 	return out;
 }
 
-}
-}
+} // namespace utils
+} // namespace thalweg

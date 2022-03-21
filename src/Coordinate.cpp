@@ -1,8 +1,7 @@
 #include "Coordinate.hpp"
 
-#include <cmath>
-
 #include <algorithm>
+#include <cmath>
 #include <numbers>
 
 namespace
@@ -17,7 +16,7 @@ auto haversine(double delta) -> double
 	return to_square * to_square;
 }
 
-}
+} // namespace
 
 namespace thalweg
 {
@@ -27,7 +26,8 @@ auto distance_between(Coordinate const& lhs, Coordinate const& rhs) -> double
 	// the following formula assumes that lhs and rhs are different
 	if (lhs == rhs)
 		return 0.0;
-	// haversine formula taken from https://movable-type.co.uk/scripts/latlong.html and https://en.wikipedia.org/wiki/Haversine_formula
+	// haversine formula taken from https://movable-type.co.uk/scripts/latlong.html and
+	// https://en.wikipedia.org/wiki/Haversine_formula
 	auto constexpr to_radians = std::numbers::pi / 180;
 
 	// phi denotes latitude in radians, lambda denotes longitude in radians
@@ -82,4 +82,4 @@ auto operator<<(std::ostream& os, Coordinate const& value) -> std::ostream&
 	return os;
 }
 
-}
+} // namespace thalweg

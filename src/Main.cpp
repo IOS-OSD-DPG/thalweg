@@ -36,15 +36,15 @@ struct CliOption
 };
 
 template<typename T, typename IterT, typename Fn>
-	auto accumulate(IterT begin, IterT end, T acc, Fn op) -> T
+auto accumulate(IterT begin, IterT end, T acc, Fn op) -> T
+{
+	while (begin != end)
 	{
-		while (begin != end)
-		{
-			acc = op(acc, *begin);
-			++begin;
-		}
-		return acc;
+		acc = op(acc, *begin);
+		++begin;
 	}
+	return acc;
+}
 
 auto usage(std::string const& name, std::vector<CliOption> const& options) -> std::string
 {
@@ -53,18 +53,16 @@ auto usage(std::string const& name, std::vector<CliOption> const& options) -> st
 		options.end(),
 		std::string(""),
 		[](std::string const& acc, CliOption const& option) { return acc + option.usage(); });
-	return "usage: " + name + " -d <data directory> -c <corner file>\n"
-		+ "\n"
-		+ option_description
-		;
+	return "usage: " + name + " -d <data directory> -c <corner file>\n" + "\n" + option_description;
 }
 
-}
+} // namespace
 
 auto main(int argc, char** argv) -> int
 {
 	bool help = false;
 	std::string data_dir, corner_file;
+	// clang-format off
 	auto help_option = CliOption {
 		'h',
 		"help",
@@ -80,17 +78,18 @@ auto main(int argc, char** argv) -> int
 		"corner",
 		"the data file containing the coordinates of the corners in the inlet"
 	};
+	// clang-format on
 
 	for (int i = 0; i < argc; ++i)
 	{
 		auto arg = argv[i];
 		if (data_option.matches(arg))
 		{
-			data_dir = argv[i+1];
+			data_dir = argv[i + 1];
 		}
 		else if (corner_option.matches(arg))
 		{
-			corner_file = argv[i+1];
+			corner_file = argv[i + 1];
 		}
 		else if (help_option.matches(arg))
 		{
@@ -149,10 +148,12 @@ auto main(int argc, char** argv) -> int
 	for (size_t i = 0; i < corners.size() - 1; ++i)
 	{
 		auto const& start = corners[i];
-		auto const& end = corners[i+1];
+		auto const& end = corners[i + 1];
 		auto const distance = thalweg::distance_between(start, end);
+		// clang-format off
 		std::cout
 			<< "between " << start << " and " << end << " for a distance of " << (distance / 1000) << "km\n";
+		// clang-format on
 	}
 
 	std::vector<thalweg::Coordinate> locations;
@@ -164,8 +165,7 @@ auto main(int argc, char** argv) -> int
 	for (auto const& corner : corners)
 	{
 		auto const closest = thalweg::closest_point(corner, locations);
-		std::cout
-			<< "The closest point to " << corner << " that could be found was " << closest << std::endl;
+		std::cout << "The closest point to " << corner << " that could be found was " << closest << std::endl;
 	}
 
 	return 0;

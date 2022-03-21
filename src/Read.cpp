@@ -16,7 +16,7 @@ auto read_data(std::istream& contents) -> std::vector<Location>
 {
 	std::vector<Location> out;
 
-	for (std::array<char, buf_size> buffer; contents.getline(buffer.data(), buf_size); )
+	for (std::array<char, buf_size> buffer; contents.getline(buffer.data(), buf_size);)
 	{
 		auto line = std::string(buffer.data());
 		if (std::count(line.begin(), line.end(), '"') != 0)
@@ -27,7 +27,7 @@ auto read_data(std::istream& contents) -> std::vector<Location>
 		auto lat = parse_dms_latitude(vals[0]);
 		auto lon = parse_dms_longitude(vals[1]);
 		auto depth = parse_depth(vals[2]);
-		out.push_back(Location{Coordinate{lat, lon}, depth});
+		out.emplace_back(Coordinate {lat, lon}, depth);
 	}
 
 	return out;
@@ -37,7 +37,7 @@ auto read_corners(std::istream& contents) -> std::vector<Coordinate>
 {
 	std::vector<Coordinate> out;
 
-	for (std::array<char, buf_size> buffer; contents.getline(buffer.data(), buf_size); )
+	for (std::array<char, buf_size> buffer; contents.getline(buffer.data(), buf_size);)
 	{
 		auto line = std::string(buffer.data());
 		if (std::count(line.begin(), line.end(), '"') != 0)
@@ -47,10 +47,10 @@ auto read_corners(std::istream& contents) -> std::vector<Coordinate>
 			throw std::runtime_error(line + " has an unexpected number of values");
 		auto lat = parse_dms_latitude(vals[0]);
 		auto lon = parse_dms_longitude(vals[1]);
-		out.push_back(Coordinate{lat, lon});
+		out.emplace_back(lat, lon);
 	}
 
 	return out;
 }
 
-}
+} // namespace thalweg

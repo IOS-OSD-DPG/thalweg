@@ -6,11 +6,11 @@
 
 namespace thalweg
 {
-	struct Location
-	{
-		Coordinate coord;
-		double depth;
-	};
-	auto operator==(Location const&, Location const&) -> bool;
-	auto operator<<(std::ostream&, Location const&) -> std::ostream&;
-}
+struct Location
+{
+	Coordinate coord;
+	double depth;
+};
+auto operator==(Location const&, Location const&) -> bool;
+auto operator<<(std::ostream&, Location const&) -> std::ostream&;
+} // namespace thalweg
