@@ -10,7 +10,6 @@ namespace fs = std::filesystem;
 
 namespace
 {
-
 struct CliOption
 {
 	char const short_name;
@@ -22,7 +21,7 @@ struct CliOption
 		if (arg.front() == '-' && arg.size() == 2)
 			return arg.back() == this->short_name;
 		else if (arg.substr(0, 2) == "--" && arg.size() > 2)
-			return arg.substr(2) == this->long_name;
+			return arg.substr(2, long_name.size()) == this->long_name;
 		else
 			return false;
 	}
@@ -34,6 +33,14 @@ struct CliOption
 		return "\t" + short_name + ", " + long_name + "\t" + this->description + "\n";
 	}
 };
+
+auto get_value(char const* flag, char const* extra) -> std::string
+{
+	auto const s = std::string(flag);
+	if (size_t idx = s.find('='); idx != std::string::npos)
+		return s.substr(idx + 1);
+	return std::string(extra);
+}
 
 template<typename T, typename IterT, typename Fn>
 auto accumulate(IterT begin, IterT end, T acc, Fn op) -> T
@@ -55,13 +62,14 @@ auto usage(std::string const& name, std::vector<CliOption> const& options) -> st
 		[](std::string const& acc, CliOption const& option) { return acc + option.usage(); });
 	return "usage: " + name + " -d <data directory> -c <corner file>\n" + "\n" + option_description;
 }
-
 } // namespace
 
 auto main(int argc, char** argv) -> int
 {
 	bool help = false;
 	std::string data_dir, corner_file;
+	// default 10m resolution
+	unsigned long resolution = 10;
 	// clang-format off
 	auto help_option = CliOption {
 		'h',
@@ -78,18 +86,28 @@ auto main(int argc, char** argv) -> int
 		"corner",
 		"the data file containing the coordinates of the corners in the inlet"
 	};
+	auto resolution_option = CliOption {
+		'r',
+		"resolution",
+		"the desired resolution (in metres) of the thalweg"
+	};
 	// clang-format on
 
 	for (int i = 0; i < argc; ++i)
 	{
 		auto arg = argv[i];
+		auto option = argv[i + 1];
 		if (data_option.matches(arg))
 		{
-			data_dir = argv[i + 1];
+			data_dir = get_value(arg, option);
 		}
 		else if (corner_option.matches(arg))
 		{
-			corner_file = argv[i + 1];
+			corner_file = get_value(arg, option);
+		}
+		else if (resolution_option.matches(arg))
+		{
+			resolution = std::stoull(get_value(arg, option));
 		}
 		else if (help_option.matches(arg))
 		{
@@ -142,7 +160,7 @@ auto main(int argc, char** argv) -> int
 	auto corners = thalweg::read_corners(corner_stream);
 
 	// TODO: use files in thalweg generation
-	std::cout << "Read " << data.size() << " data points and " << corners.size() << " corners\n";
+	std::cout << "Read " << data.size() << " data points and " << corners.size() << " corners with resolution " << resolution << "\n";
 
 	std::cout << "Corners indicate an inlet with the following sections:\n";
 	for (size_t i = 0; i < corners.size() - 1; ++i)

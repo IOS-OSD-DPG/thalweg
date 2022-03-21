@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <vector>
 
+namespace thalweg
+{
 namespace
 {
 
@@ -47,11 +49,7 @@ auto is_legal_in_number(char c) -> bool
 {
 	return c == '-' || c == '.' || (c >= '0' && c <= '9');
 }
-
 } // namespace
-
-namespace thalweg
-{
 
 auto parse_dms_latitude(std::string const& latitude) -> double
 {

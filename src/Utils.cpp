@@ -4,7 +4,6 @@ namespace thalweg
 {
 namespace utils
 {
-
 auto split(std::string const& s, char c) -> std::vector<std::string>
 {
 	std::vector<std::string> out;
@@ -19,6 +18,5 @@ auto split(std::string const& s, char c) -> std::vector<std::string>
 	out.push_back(s.substr(start));
 	return out;
 }
-
 } // namespace utils
 } // namespace thalweg

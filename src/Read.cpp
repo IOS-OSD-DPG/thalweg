@@ -9,7 +9,6 @@
 
 namespace thalweg
 {
-
 size_t constexpr buf_size = 1024;
 
 auto read_data(std::istream& contents) -> std::vector<Location>
@@ -52,5 +51,4 @@ auto read_corners(std::istream& contents) -> std::vector<Coordinate>
 
 	return out;
 }
-
 } // namespace thalweg

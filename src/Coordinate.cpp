@@ -2,11 +2,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <numbers>
 
+namespace thalweg
+{
 namespace
 {
-
 // global average
 double constexpr earth_radius_m = 6.371e6;
 
@@ -15,11 +17,7 @@ auto haversine(double delta) -> double
 	auto const to_square = std::sin(delta / 2);
 	return to_square * to_square;
 }
-
 } // namespace
-
-namespace thalweg
-{
 
 auto distance_between(Coordinate const& lhs, Coordinate const& rhs) -> double
 {
@@ -81,5 +79,4 @@ auto operator<<(std::ostream& os, Coordinate const& value) -> std::ostream&
 	os << "Coordinate{latitude:" << value.latitude << ", longitude:" << value.longitude << "}";
 	return os;
 }
-
 } // namespace thalweg

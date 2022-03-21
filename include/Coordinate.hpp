@@ -17,4 +17,5 @@ auto closest_point(Coordinate const&, std::vector<Coordinate> const&) -> Coordin
 
 auto operator==(Coordinate const&, Coordinate const&) -> bool;
 auto operator<<(std::ostream&, Coordinate const&) -> std::ostream&;
+auto coordinate_hash(Coordinate const&) -> size_t;
 } // namespace thalweg
