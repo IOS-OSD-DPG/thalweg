@@ -1,12 +1,13 @@
 include(ExternalProject)
-find_package(Git REQUIRED)
+
+set(DOCTEST_VERSION v2.4.8)
 
 ExternalProject_Add(
 	doctest
 	PREFIX ${CMAKE_BINARY_DIR}/doctest
-	GIT_REPOSITORY https://github.com/doctest/doctest.git
+	URL https://github.com/doctest/doctest/archive/refs/tags/${DOCTEST_VERSION}.zip
 	TIMEOUT 10
-	UPDATE_COMMAND ${GIT_EXECUTABLE} pull
+	UPDATE_COMMAND ""
 	CONFIGURE_COMMAND ""
 	BUILD_COMMAND ""
 	INSTALL_COMMAND ""
