@@ -1,6 +1,9 @@
 #include "Graph.hpp"
 
+#include "Heap.hpp"
+
 #include <algorithm>
+#include <cmath>
 #include <numeric>
 #include <unordered_map>
 #include <unordered_set>
@@ -104,20 +107,19 @@ auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) cons
 	auto const source_on_grid = closest_point(source, coords);
 	auto const sink_on_grid = closest_point(sink, coords);
 	auto unvisited = Set<Coordinate>(coords.begin(), coords.end());
+
 	auto tentative_distance = Map<Coordinate, double>();
 	tentative_distance[source_on_grid] = 0.0;
+
 	auto back_map = Map<Coordinate, Coordinate>();
 	back_map[source_on_grid] = source_on_grid;
 
-	while (unvisited.contains(sink_on_grid) && set_contains_keys(unvisited, tentative_distance))
+	auto next_heap = PriorityHeap<Coordinate>();
+	next_heap.push(source_on_grid, 0);
+
+	while (!next_heap.empty())
 	{
-		auto current_iter = std::min_element(
-			unvisited.begin(),
-			unvisited.end(),
-			DistanceComparer(tentative_distance));
-		if (current_iter == unvisited.end())
-			throw std::runtime_error("no more tentative distances");
-		auto current = *current_iter;
+		Coordinate current = next_heap.pop();
 
 		auto unvisited_neighbors = std::vector<Coordinate>{};
 		std::copy_if(
@@ -131,18 +133,25 @@ auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) cons
 
 		for (auto const& neighbor : unvisited_neighbors)
 		{
-			auto const iter = tentative_distance.find(current);
-			auto const distance_to_here = iter == tentative_distance.end()
-				? 0.0
-				: iter->second;
+			auto const distance_to_here = tentative_distance[current];
 			auto const new_distance = this->weight(neighbor) + distance_to_here;
 			auto const neighbor_iter = tentative_distance.find(neighbor);
 			if (neighbor_iter == tentative_distance.end() || new_distance < neighbor_iter->second)
 			{
 				tentative_distance[neighbor] = new_distance;
 				back_map[neighbor] = current;
+
+				// update queue using new distance
+				auto const distance = std::lround(new_distance);
+				if (neighbor_iter == tentative_distance.end())
+				{
+					next_heap.push(neighbor, distance);
+				}
+				else
+				{
+					next_heap.decrease_priority(neighbor, distance);
+				}
 			}
-			
 		}
 
 		unvisited.erase(current);

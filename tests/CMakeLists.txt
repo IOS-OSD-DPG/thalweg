@@ -4,6 +4,7 @@ set(TestFiles
 	UtilsTest.cpp
 	CoordinateTest.cpp
 	GraphTest.cpp
+	HeapTest.cpp
 	)
 
 add_executable(thalwegTest
