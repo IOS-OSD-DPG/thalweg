@@ -114,7 +114,7 @@ auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) cons
 	auto next_heap = PriorityHeap<Coordinate>();
 	next_heap.push(source_on_grid, 0);
 
-	while (!next_heap.empty())
+	while (unvisited.contains(sink_on_grid) && !next_heap.empty())
 	{
 		Coordinate current = next_heap.pop();
 
@@ -148,6 +148,9 @@ auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) cons
 
 		unvisited.erase(current);
 	}
+
+	if (unvisited.contains(sink_on_grid))
+		throw std::runtime_error("no path from source to sink");
 
 	auto path = std::vector<Location>();
 	auto current = sink_on_grid;
