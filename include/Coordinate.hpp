@@ -43,6 +43,8 @@ auto closest_point(Coordinate const& point, Collection<Coordinate> const& collec
 }
 
 auto operator==(Coordinate const&, Coordinate const&) -> bool;
+// only necessary until C++20
+auto operator!=(Coordinate const&, Coordinate const&) -> bool;
 auto operator<<(std::ostream&, Coordinate const&) -> std::ostream&;
 auto coordinate_hash(Coordinate const&) -> size_t;
 } // namespace thalweg

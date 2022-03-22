@@ -1,6 +1,7 @@
 #include "Graph.hpp"
 #include "Read.hpp"
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>

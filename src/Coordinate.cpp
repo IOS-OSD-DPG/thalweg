@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
-#include <numbers>
 
 namespace thalweg
 {
@@ -11,6 +10,9 @@ namespace
 {
 // global average
 double constexpr earth_radius_m = 6.371e6;
+
+// pi is only defined properly in C++20 apparently
+double constexpr pi = 3.14159;
 
 auto haversine(double delta) -> double
 {
@@ -26,7 +28,7 @@ auto distance_between(Coordinate const& lhs, Coordinate const& rhs) -> double
 		return 0.0;
 	// haversine formula taken from https://movable-type.co.uk/scripts/latlong.html and
 	// https://en.wikipedia.org/wiki/Haversine_formula
-	auto constexpr to_radians = std::numbers::pi / 180;
+	auto constexpr to_radians = pi / 180;
 
 	// phi denotes latitude in radians, lambda denotes longitude in radians
 	auto const phi_left = lhs.latitude * to_radians;
@@ -51,6 +53,11 @@ auto distance_between(Coordinate const& lhs, Coordinate const& rhs) -> double
 auto operator==(Coordinate const& lhs, Coordinate const& rhs) -> bool
 {
 	return lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude;
+}
+
+auto operator!=(Coordinate const& lhs, Coordinate const& rhs) -> bool
+{
+	return !operator==(lhs, rhs);
 }
 
 auto operator<<(std::ostream& os, Coordinate const& value) -> std::ostream&
