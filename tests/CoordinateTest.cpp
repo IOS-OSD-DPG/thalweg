@@ -60,7 +60,7 @@ TEST_SUITE("CoordinateTest")
 
 	TEST_CASE("closest_point rejects empty collection")
 	{
-		CHECK_THROWS(closest_point(Coordinate {0, 0}, {}));
+		CHECK_THROWS(closest_point(Coordinate {0, 0}, std::vector<Coordinate>{}));
 	}
 
 	TEST_CASE("closest_point returns a value in the collection")

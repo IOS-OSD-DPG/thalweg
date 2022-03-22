@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <ranges>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -97,15 +98,11 @@ auto Graph::find(Coordinate coord) const -> DataIterator
 
 auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) const -> std::vector<Location>
 {
-	auto coords = std::vector<Coordinate>{};
-	std::transform(
-		this->data.begin(),
-		this->data.end(),
-		std::back_inserter(coords),
-		[](Location const& loc) { return loc.coord; });
+	auto coords = this->data | std::views::transform([](Location const& loc) { return loc.coord; });
 
-	auto const source_on_grid = closest_point(source, coords);
-	auto const sink_on_grid = closest_point(sink, coords);
+	auto const source_on_grid = closest_point(source, coords.begin(), coords.end());
+	auto const sink_on_grid = closest_point(sink, coords.begin(), coords.end());
+
 	auto unvisited = Set<Coordinate>(coords.begin(), coords.end());
 
 	auto tentative_distance = Map<Coordinate, double>();
@@ -121,17 +118,12 @@ auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) cons
 	{
 		Coordinate current = next_heap.pop();
 
-		auto unvisited_neighbors = std::vector<Coordinate>{};
-		std::copy_if(
-			coords.begin(),
-			coords.end(),
-			std::back_inserter(unvisited_neighbors),
-			[&, this](Coordinate const& coord)
-			{
-				return current != coord && this->adjacent(current, coord) && unvisited.contains(coord);
-			});
+		auto is_neighbor = [&, this](Coordinate const& coord)
+		{
+			return current != coord && this->adjacent(current, coord) && unvisited.contains(coord);
+		};
 
-		for (auto const& neighbor : unvisited_neighbors)
+		for (auto const& neighbor : coords | std::views::filter(is_neighbor))
 		{
 			auto const distance_to_here = tentative_distance[current];
 			auto const new_distance = this->weight(neighbor) + distance_to_here;
