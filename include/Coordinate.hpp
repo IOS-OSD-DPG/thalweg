@@ -49,3 +49,13 @@ auto operator!=(Coordinate const&, Coordinate const&) -> bool;
 auto operator<<(std::ostream&, Coordinate const&) -> std::ostream&;
 auto coordinate_hash(Coordinate const&) -> size_t;
 } // namespace thalweg
+
+template <>
+struct std::hash<thalweg::Coordinate>
+{
+	auto operator()(thalweg::Coordinate const& point) const noexcept -> size_t
+	{
+		auto const hasher = std::hash<double>{};
+		return hasher(point.latitude) ^ hasher(point.longitude);
+	}
+};

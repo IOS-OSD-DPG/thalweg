@@ -8,16 +8,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-template <>
-struct std::hash<thalweg::Coordinate>
-{
-	auto operator()(thalweg::Coordinate const& point) const noexcept -> size_t
-	{
-		auto const hasher = std::hash<double>{};
-		return hasher(point.latitude) ^ hasher(point.longitude);
-	}
-};
-
 namespace thalweg
 {
 namespace

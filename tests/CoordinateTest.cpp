@@ -91,4 +91,11 @@ TEST_SUITE("CoordinateTest")
 		};
 		CHECK(closest_point(point, collection) == Coordinate {1, 1});
 	}
+
+	TEST_CASE("Coordinate can be hashed")
+	{
+		auto const hasher = std::hash<Coordinate>();
+		CHECK(hasher(Coordinate{0, 0}) == hasher(Coordinate{0, 0}));
+		CHECK(hasher(Coordinate{0, 0}) != hasher(Coordinate{1, 0}));
+	}
 }

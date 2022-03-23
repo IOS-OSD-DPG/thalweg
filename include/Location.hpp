@@ -29,6 +29,17 @@ auto to_coordinates(
 	return out;
 }
 
+auto shrink(std::vector<Location>, unsigned) -> std::vector<Location>;
+
 auto operator==(Location const&, Location const&) -> bool;
 auto operator<<(std::ostream&, Location const&) -> std::ostream&;
 } // namespace thalweg
+
+template <>
+struct std::hash<thalweg::Location>
+{
+	auto operator()(thalweg::Location const& point) const noexcept -> size_t
+	{
+		return std::hash<thalweg::Coordinate>()(point.coord) ^ std::hash<double>()(point.depth);
+	}
+};

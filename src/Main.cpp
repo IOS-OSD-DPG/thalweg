@@ -183,7 +183,11 @@ auto main(int argc, char** argv) -> int
 		std::cout << "The closest point to " << corner << " that could be found was " << closest << std::endl;
 	}
 
-	auto const graph = thalweg::Graph(data, resolution);
+	std::cout << "Performing shrink";
+	auto const shrunk = thalweg::shrink(data, resolution/2);
+	std::cout << "shrunk data to " << shrunk.size() << " points\n";
+
+	auto const graph = thalweg::Graph(shrunk, resolution);
 	std::cout << "Performing shortest path search\n";
 	auto const path = graph.shortest_path(corners[0], corners[1]);
 
