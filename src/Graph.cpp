@@ -22,17 +22,70 @@ namespace thalweg
 {
 namespace
 {
-template<typename K, typename V>
-using Map = std::unordered_map<K, V>;
-
-template<typename K>
-using Set = std::unordered_set<K>;
-
-template<typename K>
-auto in(K const& value, Set<K> const& set) -> bool
+class ShortestPathState
 {
-	return set.count(value) > 0;
-}
+public:
+	ShortestPathState(std::vector<Coordinate> container, Coordinate source)
+		: unvisited_set(std::begin(container), std::end(container))
+	{
+		update(source, 0.0, source);
+	}
+
+	auto update(Coordinate destination, double distance, Coordinate previous) -> void
+	{
+		bool const already_present = contains(destination);
+		auto const priority = std::lround(distance);
+		state[destination] = std::make_pair(distance, previous);
+		if (already_present)
+		{
+			work_queue.decrease_priority(destination, priority);
+		}
+		else
+		{
+			work_queue.push(destination, priority);
+		}
+	}
+
+	auto distance_to(Coordinate const& destination) const -> double
+	{
+		return state.at(destination).first;
+	}
+
+	auto previous(Coordinate const& destination) const -> Coordinate
+	{
+		return state.at(destination).second;
+	}
+
+	auto contains(Coordinate const& destination) const -> bool
+	{
+		return state.find(destination) != state.end();
+	}
+
+	auto get_next() -> Coordinate
+	{
+		return work_queue.pop();
+	}
+
+	auto work_remains() -> bool
+	{
+		return !work_queue.empty();
+	}
+
+	auto unvisited(Coordinate const& destination) -> bool
+	{
+		return unvisited_set.count(destination) > 0;
+	}
+
+	auto visit(Coordinate const& destination) -> void
+	{
+		unvisited_set.erase(destination);
+	}
+
+private:
+	std::unordered_set<Coordinate> unvisited_set;
+	std::unordered_map<Coordinate, std::pair<double, Coordinate>> state;
+	PriorityHeap<Coordinate> work_queue;
+};
 
 auto max_depth_of(std::vector<thalweg::Location> const& v) -> double
 {
@@ -81,27 +134,18 @@ auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) cons
 {
 	auto const coords = to_coordinates(this->data);
 
-	auto const source_on_grid = closest_point(source, coords.begin(), coords.end());
-	auto const sink_on_grid = closest_point(sink, coords.begin(), coords.end());
+	auto const source_on_grid = closest_point(source, coords);
+	auto const sink_on_grid = closest_point(sink, coords);
 
-	auto unvisited = Set<Coordinate>(coords.begin(), coords.end());
+	auto state = ShortestPathState(coords, source_on_grid);
 
-	auto tentative_distance = Map<Coordinate, double>();
-	tentative_distance[source_on_grid] = 0.0;
-
-	auto back_map = Map<Coordinate, Coordinate>();
-	back_map[source_on_grid] = source_on_grid;
-
-	auto next_heap = PriorityHeap<Coordinate>();
-	next_heap.push(source_on_grid, 0);
-
-	while (in(sink_on_grid, unvisited) && !next_heap.empty())
+	while (state.unvisited(sink_on_grid) && state.work_remains())
 	{
-		Coordinate current = next_heap.pop();
+		Coordinate current = state.get_next();
 
 		auto is_neighbor = [&, this](Coordinate const& coord)
 		{
-			return current != coord && this->adjacent(current, coord) && in(coord, unvisited);
+			return current != coord && this->adjacent(current, coord) && state.unvisited(coord);
 		};
 
 		for (auto const& neighbor : coords)
@@ -109,31 +153,18 @@ auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) cons
 			// avoid unnecessary copy until ranges are available
 			if (!is_neighbor(neighbor))
 				continue;
-			auto const distance_to_here = tentative_distance[current];
+			auto const distance_to_here = state.distance_to(current);
 			auto const new_distance = this->weight(neighbor) + distance_to_here;
-			auto const neighbor_iter = tentative_distance.find(neighbor);
-			if (neighbor_iter == tentative_distance.end() || new_distance < neighbor_iter->second)
+			if (!state.contains(neighbor) || new_distance < state.distance_to(neighbor))
 			{
-				tentative_distance[neighbor] = new_distance;
-				back_map[neighbor] = current;
-
-				// update queue using new distance
-				auto const distance = std::lround(new_distance);
-				if (neighbor_iter == tentative_distance.end())
-				{
-					next_heap.push(neighbor, distance);
-				}
-				else
-				{
-					next_heap.decrease_priority(neighbor, distance);
-				}
+				state.update(neighbor, new_distance, current);
 			}
 		}
 
-		unvisited.erase(current);
+		state.visit(current);
 	}
 
-	if (in(sink_on_grid, unvisited))
+	if (state.unvisited(sink_on_grid))
 		throw std::runtime_error("no path from source to sink");
 
 	auto path = std::vector<Location>();
@@ -141,7 +172,7 @@ auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) cons
 	while (current != source_on_grid)
 	{
 		path.push_back(*this->find(current));
-		current = back_map[current];
+		current = state.previous(current);
 	}
 	path.push_back(*this->find(current));
 
