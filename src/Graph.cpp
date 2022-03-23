@@ -42,30 +42,6 @@ auto max_depth_of(std::vector<thalweg::Location> const& v) -> double
 		0.0,
 		[](double acc, thalweg::Location val) { return std::max(acc, val.depth); });
 }
-
-template<typename K, typename V>
-auto set_contains_keys(Set<K> s, Map<K, V> m) -> bool
-{
-	return std::any_of(
-		s.begin(),
-		s.end(),
-		[&](K const& key) { return m.contains(key); });
-}
-
-template<typename K, typename V>
-struct DistanceComparer
-{
-	Map<K, V> distances;
-
-	auto operator()(K const& lhs, K const& rhs) -> bool
-	{
-		if (!this->distances.contains(lhs))
-			return false;
-		if (!this->distances.contains(rhs))
-			return true;
-		return this->distances[lhs] < this->distances[rhs];
-	}
-};
 } // namespace
 
 Graph::Graph(std::vector<Location> data, unsigned resolution)
