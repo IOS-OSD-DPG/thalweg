@@ -79,12 +79,7 @@ auto Graph::find(Coordinate coord) const -> DataIterator
 
 auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) const -> std::vector<Location>
 {
-	auto coords = std::vector<Coordinate>();
-	std::transform(
-		data.begin(),
-		data.end(),
-		std::back_inserter(coords),
-		&Location::coordinates);
+	auto const coords = to_coordinates(this->data);
 
 	auto const source_on_grid = closest_point(source, coords.begin(), coords.end());
 	auto const sink_on_grid = closest_point(sink, coords.begin(), coords.end());

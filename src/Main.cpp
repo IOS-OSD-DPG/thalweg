@@ -176,21 +176,16 @@ auto main(int argc, char** argv) -> int
 		// clang-format on
 	}
 
-	std::vector<thalweg::Coordinate> locations;
-	std::transform(
-		data.begin(),
-		data.end(),
-		std::back_inserter(locations),
-		&thalweg::Location::coordinates);
+	auto const locations = thalweg::to_coordinates(data);
 	for (auto const& corner : corners)
 	{
 		auto const closest = thalweg::closest_point(corner, locations);
 		std::cout << "The closest point to " << corner << " that could be found was " << closest << std::endl;
 	}
 
-	thalweg::Graph graph(data, resolution);
+	auto const graph = thalweg::Graph(data, resolution);
 	std::cout << "Performing shortest path search\n";
-	auto path = graph.shortest_path(corners[0], corners[1]);
+	auto const path = graph.shortest_path(corners[0], corners[1]);
 
 	for (auto const& node : path)
 	{

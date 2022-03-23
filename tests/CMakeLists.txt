@@ -3,6 +3,7 @@ set(TestFiles
 	ReadTest.cpp
 	UtilsTest.cpp
 	CoordinateTest.cpp
+	LocationTest.cpp
 	GraphTest.cpp
 	HeapTest.cpp
 	)
