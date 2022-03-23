@@ -181,7 +181,7 @@ auto main(int argc, char** argv) -> int
 		data.begin(),
 		data.end(),
 		std::back_inserter(locations),
-		[](thalweg::Location loc) { return loc.coord; });
+		&thalweg::Location::coordinates);
 	for (auto const& corner : corners)
 	{
 		auto const closest = thalweg::closest_point(corner, locations);

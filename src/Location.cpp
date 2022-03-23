@@ -2,6 +2,11 @@
 
 namespace thalweg
 {
+auto Location::coordinates(Location const& loc) -> Coordinate
+{
+	return loc.coord;
+}
+
 auto operator==(Location const& lhs, Location const& rhs) -> bool
 {
 	return lhs.coord == rhs.coord && lhs.depth == rhs.depth;

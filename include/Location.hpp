@@ -10,6 +10,8 @@ struct Location
 {
 	Coordinate coord;
 	double depth;
+
+	static auto coordinates(Location const&) -> Coordinate;
 };
 auto operator==(Location const&, Location const&) -> bool;
 auto operator<<(std::ostream&, Location const&) -> std::ostream&;

@@ -84,7 +84,7 @@ auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) cons
 		data.begin(),
 		data.end(),
 		std::back_inserter(coords),
-		[](Location const& loc) { return loc.coord; });
+		&Location::coordinates);
 
 	auto const source_on_grid = closest_point(source, coords.begin(), coords.end());
 	auto const sink_on_grid = closest_point(sink, coords.begin(), coords.end());
