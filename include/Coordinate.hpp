@@ -36,8 +36,9 @@ auto closest_point(Coordinate const& point, Iter begin, Iter end) -> Coordinate
 	return best_point;
 }
 
-template<template <typename> typename Collection>
-auto closest_point(Coordinate const& point, Collection<Coordinate> const& collection) -> Coordinate
+// clang requires the allocator be acknowledged in the template
+template<typename Allocator, template <typename, typename> typename Collection>
+auto closest_point(Coordinate const& point, Collection<Coordinate, Allocator> const& collection) -> Coordinate
 {
 	return closest_point(point, std::begin(collection), std::end(collection));
 }
