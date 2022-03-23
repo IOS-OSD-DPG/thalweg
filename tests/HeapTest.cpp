@@ -116,7 +116,7 @@ TEST_SUITE("HeapTest")
 		auto heap = PriorityHeap<int>();
 		heap.push(1, 10);
 		heap.push(2, 5);
-		heap.decrease_priority(1, 6);
+		heap.decrease_priority(1, 4);
 		CHECK(heap.pop() == 1);
 		CHECK(heap.pop() == 2);
 	}

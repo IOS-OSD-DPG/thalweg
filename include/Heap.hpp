@@ -80,7 +80,7 @@ public:
 		return MaxHeap<std::pair<long, T>>::pop().second;
 	}
 
-	auto decrease_priority(T value, long by_amount) -> void
+	auto decrease_priority(T value, long priority) -> void
 	{
 		auto const iter = std::find_if(
 			this->data.begin(),
@@ -88,7 +88,7 @@ public:
 			[&](auto elem){ return elem.second == value; });
 		if (iter != this->data.end())
 		{
-			iter->first -= by_amount;
+			iter->first = priority;
 			std::make_heap(this->data.begin(), this->data.end(), this->comp);
 		}
 	}
