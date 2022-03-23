@@ -140,11 +140,12 @@ auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) cons
 	auto current = sink_on_grid;
 	while (current != source_on_grid)
 	{
-		path.insert(path.begin(), *this->find(current));
+		path.push_back(*this->find(current));
 		current = back_map[current];
 	}
-	path.insert(path.begin(), *this->find(current));
+	path.push_back(*this->find(current));
 
+	std::reverse(path.begin(), path.end());
 	return path;
 }
 } // namespace thalweg
