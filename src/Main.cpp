@@ -30,8 +30,8 @@ struct CliOption
 
 	auto usage() const -> std::string
 	{
-		auto short_name = std::string("-") + this->short_name;
-		auto long_name = "--" + this->long_name;
+		auto const short_name = std::string("-") + this->short_name;
+		auto const long_name = "--" + this->long_name;
 		return "\t" + short_name + ", " + long_name + "\t" + this->description + "\n";
 	}
 };
@@ -57,7 +57,7 @@ auto accumulate(IterT begin, IterT end, T acc, Fn op) -> T
 
 auto usage(std::string const& name, std::vector<CliOption> const& options) -> std::string
 {
-	auto option_description = accumulate(
+	auto const option_description = accumulate(
 		options.begin(),
 		options.end(),
 		std::string(""),
@@ -73,22 +73,22 @@ auto main(int argc, char** argv) -> int
 	// default 10m resolution
 	unsigned long resolution = 10;
 	// clang-format off
-	auto help_option = CliOption {
+	auto const help_option = CliOption {
 		'h',
 		"help",
 		"display this help message"
 	};
-	auto data_option = CliOption {
+	auto const data_option = CliOption {
 		'd',
 		"data",
 		"the directory containing raw data files with latitude,longitude,depth lines"
 	};
-	auto corner_option = CliOption {
+	auto const corner_option = CliOption {
 		'c',
 		"corner",
 		"the data file containing the coordinates of the corners in the inlet"
 	};
-	auto resolution_option = CliOption {
+	auto const resolution_option = CliOption {
 		'r',
 		"resolution",
 		"the desired resolution (in metres) of the thalweg"
@@ -97,8 +97,8 @@ auto main(int argc, char** argv) -> int
 
 	for (int i = 0; i < argc; ++i)
 	{
-		auto arg = argv[i];
-		auto option = argv[i + 1];
+		auto const arg = argv[i];
+		auto const option = argv[i + 1];
 		if (data_option.matches(arg))
 		{
 			data_dir = get_value(arg, option);
@@ -136,18 +136,18 @@ auto main(int argc, char** argv) -> int
 	std::vector<thalweg::Location> data;
 	for (auto iter = fs::directory_iterator(data_path); iter != fs::directory_iterator(); ++iter)
 	{
-		auto entry = *iter;
+		auto const entry = *iter;
 		if (!entry.exists() || !entry.is_regular_file())
 			continue;
-		auto file_name = entry.path();
+		auto const file_name = entry.path();
 		if (file_name.extension() != ".txt")
 			continue;
 		auto data_stream = std::fstream(file_name);
-		auto tmp = thalweg::read_data(data_stream);
+		auto const tmp = thalweg::read_data(data_stream);
 		data.insert(data.end(), tmp.begin(), tmp.end());
 	}
 
-	auto corner_path = fs::path(corner_file);
+	auto const corner_path = fs::path(corner_file);
 	if (!fs::exists(corner_path))
 	{
 		std::cerr << data_dir << " does not seem to exist\n";
@@ -159,7 +159,7 @@ auto main(int argc, char** argv) -> int
 		return 3;
 	}
 	auto corner_stream = std::fstream(corner_path);
-	auto corners = thalweg::read_corners(corner_stream);
+	auto const corners = thalweg::read_corners(corner_stream);
 
 	// TODO: use files in thalweg generation
 	std::cout << "Read " << data.size() << " data points and " << corners.size() << " corners with resolution " << resolution << "\n";
