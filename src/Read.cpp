@@ -26,7 +26,7 @@ auto read_data(std::istream& contents) -> std::vector<Location>
 		auto const lat = parse_dms_latitude(vals[0]);
 		auto const lon = parse_dms_longitude(vals[1]);
 		auto const depth = parse_depth(vals[2]);
-		out.emplace_back(Location{Coordinate{lat, lon}, depth});
+		out.push_back(Location{Coordinate{lat, lon}, depth});
 	}
 
 	return out;

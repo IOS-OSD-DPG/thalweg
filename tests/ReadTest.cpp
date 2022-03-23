@@ -6,24 +6,31 @@
 
 using namespace thalweg;
 
-// the standard forbids this, but it seems to work
-namespace std
+namespace
 {
-template<typename T>
-auto operator<<(std::ostream& os, std::vector<T> const& vec) -> std::ostream&
-{
-	os << "[";
-	for (size_t i = 0; i < vec.size(); ++i)
+	auto check(Coordinate const& lhs, Coordinate const& rhs) -> void
 	{
-		if (i < vec.size() - 1)
-			os << vec[i] << ", ";
-		else
-			os << vec[i];
+		CHECK(lhs.latitude == doctest::Approx(rhs.latitude));
+		CHECK(lhs.longitude == doctest::Approx(rhs.longitude));
 	}
-	os << "]";
-	return os;
+
+	auto check(Location const& lhs, Location const& rhs) -> void
+	{
+		check(lhs.coord, rhs.coord);
+		CHECK(lhs.depth == doctest::Approx(rhs.depth));
+	}
+
+	template<typename T>
+	auto check(std::vector<T> const& lhs, std::vector<T> const& rhs) -> void
+	{
+		CHECK(lhs.size() == rhs.size());
+		size_t const length = std::min(lhs.size(), rhs.size());
+		for (size_t i = 0; i < length; ++i)
+		{
+			check(lhs[i], rhs[i]);
+		}
+	}
 }
-} // namespace std
 
 TEST_SUITE("ReadTest")
 {
@@ -34,7 +41,7 @@ TEST_SUITE("ReadTest")
 		auto const expected = std::vector<Location> {
 			Location {Coordinate {49.2, -112.94}, 100.000},
 		};
-		CHECK(read_data(contents) == expected);
+		check(read_data(contents), expected);
 	}
 
 	TEST_CASE("read_data can convert multiple lines")
@@ -45,7 +52,7 @@ TEST_SUITE("ReadTest")
 			Location {Coordinate {49.2, -112.94}, 100.000},
 			Location {Coordinate {-49.2, 112.94}, 100.000},
 		};
-		CHECK(read_data(contents) == expected);
+		check(read_data(contents), expected);
 	}
 
 	TEST_CASE("read_data ignores lines that are obviously wrong")
@@ -55,7 +62,7 @@ TEST_SUITE("ReadTest")
 		auto const expected = std::vector<Location> {
 			Location {Coordinate {49.2, -112.94}, 100.000},
 		};
-		CHECK(read_data(contents) == expected);
+		check(read_data(contents), expected);
 	}
 
 	TEST_CASE("read_corners can convert a single line")
@@ -64,7 +71,7 @@ TEST_SUITE("ReadTest")
 		auto const expected = std::vector<Coordinate> {
 			Coordinate {49.2, -112.94},
 		};
-		CHECK(read_corners(contents) == expected);
+		check(read_corners(contents), expected);
 	}
 
 	TEST_CASE("read_corners can convert multiple lines")
@@ -74,7 +81,7 @@ TEST_SUITE("ReadTest")
 			Coordinate { 49.2, -112.94},
 			Coordinate {-49.2,  112.94},
 		};
-		CHECK(read_corners(contents) == expected);
+		check(read_corners(contents), expected);
 	}
 
 	TEST_CASE("read_corners ignores lines that are obviously wrong")
@@ -83,6 +90,6 @@ TEST_SUITE("ReadTest")
 		auto const expected = std::vector<Coordinate> {
 			Coordinate {49.2, -112.94},
 		};
-		CHECK(read_corners(contents) == expected);
+		check(read_corners(contents), expected);
 	}
 }

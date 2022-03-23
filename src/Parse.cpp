@@ -26,7 +26,7 @@ auto get_dms_coord(std::string const& value, int bound, bool negate) -> double
 	if (minutes < 0 || minutes > 60)
 		throw std::runtime_error(value + " has a minute value outside the expected bounds");
 
-	int const seconds = std::stod(split_vals[2]);
+	double const seconds = std::stod(split_vals[2]);
 	if (seconds < 0.0 || seconds > 60.0)
 		throw std::runtime_error(value + " has a second value outside the expected bounds");
 
