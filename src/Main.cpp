@@ -185,7 +185,7 @@ auto main(int argc, char** argv) -> int
 
 	auto const graph = thalweg::Graph(data, resolution);
 	std::cout << "Performing shortest path search\n";
-	auto const path = graph.shortest_path(corners[0], corners[1]);
+	auto const path = graph.shortest_path(corners.front(), corners.back());
 
 	for (auto const& node : path)
 	{
