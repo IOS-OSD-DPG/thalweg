@@ -2,6 +2,8 @@
 
 #include "doctest.h"
 
+#include <vector>
+
 using namespace thalweg;
 
 TEST_SUITE("CoordinateTest")
