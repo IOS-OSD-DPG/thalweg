@@ -1,6 +1,6 @@
 #include "Location.hpp"
 
-#include <execution>
+#include <numeric>
 #include <unordered_set>
 
 namespace thalweg
@@ -41,7 +41,6 @@ auto shrink(std::vector<Location> data, unsigned resolution) -> std::vector<Loca
 
 		std::vector<Location> neighbors;
 		std::copy_if(
-			std::execution::par_unseq,
 			data.begin(),
 			data.end(),
 			std::back_inserter(neighbors),
@@ -63,7 +62,6 @@ auto to_coordinates(std::vector<Location> const& in) -> std::vector<Coordinate>
 {
 	std::vector<Coordinate> out(in.size());
 	std::transform(
-		std::execution::par_unseq,
 		in.begin(),
 		in.end(),
 		out.begin(),
@@ -75,7 +73,6 @@ auto to_depths(std::vector<Location> const& in) -> std::vector<double>
 {
 	std::vector<double> out(in.size());
 	std::transform(
-		std::execution::par_unseq,
 		in.begin(),
 		in.end(),
 		out.begin(),

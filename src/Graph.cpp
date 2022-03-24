@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <execution>
 #include <numeric>
 #include <unordered_map>
 #include <unordered_set>
@@ -109,7 +108,6 @@ auto Graph::weight(Coordinate coord) const -> double
 auto Graph::find(Coordinate coord) const -> DataIterator
 {
 	return std::find_if(
-		std::execution::par_unseq,
 		this->data.begin(),
 		this->data.end(),
 		[&](Location const& loc) { return loc.coord == coord; });

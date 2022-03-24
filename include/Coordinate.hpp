@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <execution>
 #include <iostream>
 
 namespace thalweg
@@ -19,7 +18,6 @@ template<typename Iter>
 auto closest_point(Coordinate const& point, Iter begin, Iter end) -> Coordinate
 {
 	auto const closest = std::min_element(
-		std::execution::par_unseq,
 		begin,
 		end,
 		[&](Coordinate const& lhs, Coordinate const& rhs)

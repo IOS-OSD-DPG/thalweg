@@ -3,7 +3,6 @@
 #include "Coordinate.hpp"
 
 #include <algorithm>
-#include <execution>
 #include <iostream>
 #include <vector>
 

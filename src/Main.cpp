@@ -45,7 +45,7 @@ auto get_value(char const* flag, char const* extra) -> std::string
 }
 
 template<typename T, typename IterT, typename Fn>
-auto accumulate(IterT begin, IterT end, T acc, Fn op) -> T
+auto fold(IterT begin, IterT end, T acc, Fn op) -> T
 {
 	while (begin != end)
 	{
@@ -57,7 +57,7 @@ auto accumulate(IterT begin, IterT end, T acc, Fn op) -> T
 
 auto usage(std::string const& name, std::vector<CliOption> const& options) -> std::string
 {
-	auto const option_description = std::accumulate(
+	auto const option_description = fold(
 		options.begin(),
 		options.end(),
 		std::string(""),
