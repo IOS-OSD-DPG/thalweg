@@ -15,8 +15,9 @@ namespace
 class ShortestPathState
 {
 public:
-	ShortestPathState(std::vector<Coordinate> container, Coordinate source)
+	ShortestPathState(std::vector<Coordinate> container, Coordinate source, Coordinate sink)
 		: unvisited_set(std::begin(container), std::end(container))
+		, sink(sink)
 	{
 		update(source, 0.0, source);
 	}
@@ -24,7 +25,7 @@ public:
 	auto update(Coordinate destination, double distance, Coordinate previous) -> void
 	{
 		bool const already_present = contains(destination);
-		auto const priority = std::lround(distance);
+		auto const priority = std::lround(distance + distance_between(sink, destination));
 		state[destination] = std::make_pair(distance, previous);
 		if (already_present)
 		{
@@ -73,6 +74,7 @@ public:
 
 private:
 	std::unordered_set<Coordinate> unvisited_set;
+	Coordinate sink;
 	std::unordered_map<Coordinate, std::pair<double, Coordinate>> state;
 	PriorityHeap<Coordinate> work_queue;
 };
@@ -127,7 +129,7 @@ auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) cons
 	auto const source_on_grid = closest_point(source, coords);
 	auto const sink_on_grid = closest_point(sink, coords);
 
-	auto state = ShortestPathState(coords, source_on_grid);
+	auto state = ShortestPathState(coords, source_on_grid, sink_on_grid);
 
 	while (state.unvisited(sink_on_grid) && state.work_remains())
 	{

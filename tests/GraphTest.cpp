@@ -91,24 +91,26 @@ TEST_SUITE("GraphTest")
 		CHECK(result[1] == Location{Coordinate{1, 1}, 1});
 	}
 
-	TEST_CASE("shortest_path provides a path that maps to the path of deepest values")
+	TEST_CASE("shortest_path provides a path that roughly maps to the path of deepest values")
 	{
+		// need an order of magnitude difference between the deepest point and the closer ones
+		auto const km = 1000.0;
 		auto const data = std::vector<Location> {
-			{Coordinate{-1, -1}, 14},
-			{Coordinate{-1, 0}, 15},
-			{Coordinate{-1, 1}, 10},
-			{Coordinate{0, -1}, 10},
-			{Coordinate{0, 0}, 9},
-			{Coordinate{0, 1}, 14},
-			{Coordinate{1, -1}, 5},
-			{Coordinate{1, 0}, 6},
-			{Coordinate{1, 1}, 10},
+			{Coordinate{-1, -1}, 140 * km},
+			{Coordinate{-1, 0}, 150 * km},
+			{Coordinate{-1, 1}, 100 * km},
+			{Coordinate{0, -1}, 100 * km},
+			{Coordinate{0, 0}, 9 * km},
+			{Coordinate{0, 1}, 140 * km},
+			{Coordinate{1, -1}, 5 * km},
+			{Coordinate{1, 0}, 6 * km},
+			{Coordinate{1, 1}, 100 * km},
 		};
 		auto const expected = std::vector<Location> {
-			{Coordinate{-1, -1}, 14},
-			{Coordinate{-1, 0}, 15},
-			{Coordinate{0, 1}, 14},
-			{Coordinate{1, 1}, 10},
+			{Coordinate{-1, -1}, 140 * km},
+			{Coordinate{-1, 0}, 150 * km},
+			{Coordinate{0, 1}, 140 * km},
+			{Coordinate{1, 1}, 100 * km},
 		};
 		auto graph = Graph(data, 200'000);
 		auto const result = graph.shortest_path(Coordinate{-1, -1}, Coordinate{1, 1});
