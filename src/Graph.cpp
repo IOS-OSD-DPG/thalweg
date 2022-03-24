@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <execution>
 #include <numeric>
 #include <unordered_map>
 #include <unordered_set>
@@ -78,15 +79,6 @@ private:
 	std::unordered_map<Coordinate, std::pair<double, Coordinate>> state;
 	PriorityHeap<Coordinate> work_queue;
 };
-
-auto max_depth_of(std::vector<thalweg::Location> const& v) -> double
-{
-	return std::accumulate(
-		v.begin(),
-		v.end(),
-		0.0,
-		[](double acc, thalweg::Location val) { return std::max(acc, val.depth); });
-}
 } // namespace
 
 Graph::Graph(std::vector<Location> data, unsigned resolution)
@@ -117,6 +109,7 @@ auto Graph::weight(Coordinate coord) const -> double
 auto Graph::find(Coordinate coord) const -> DataIterator
 {
 	return std::find_if(
+		std::execution::par_unseq,
 		this->data.begin(),
 		this->data.end(),
 		[&](Location const& loc) { return loc.coord == coord; });

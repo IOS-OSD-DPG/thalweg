@@ -3,7 +3,9 @@
 #include "Coordinate.hpp"
 
 #include <algorithm>
+#include <execution>
 #include <iostream>
+#include <vector>
 
 namespace thalweg
 {
@@ -13,21 +15,17 @@ struct Location
 	double depth;
 
 	static auto coordinates(Location const&) -> Coordinate;
+	static auto depth_of(Location const&) -> double;
 };
 
-template<template <typename> typename Allocator, template <typename,typename> typename Container>
-auto to_coordinates(
-	Container<Location, Allocator<Location>> const& in)
-	-> Container<Coordinate, Allocator<Coordinate>>
-{
-	Container<Coordinate, Allocator<Coordinate>> out;
-	std::transform(
-		std::begin(in),
-		std::end(in),
-		std::back_inserter(out),
-		&Location::coordinates);
-	return out;
-}
+auto distance_between(Location const& lhs, Coordinate const& rhs) -> double;
+auto distance_between(Coordinate const& lhs, Location const& rhs) -> double;
+auto distance_between(Location const& lhs, Location const& rhs) -> double;
+
+auto to_coordinates(std::vector<Location> const&) -> std::vector<Coordinate>;
+auto to_depths(std::vector<Location> const&) -> std::vector<double>;
+
+auto max_depth_of(std::vector<Location> const&) -> double;
 
 auto shrink(std::vector<Location>, unsigned) -> std::vector<Location>;
 

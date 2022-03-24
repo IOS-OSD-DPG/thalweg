@@ -1,5 +1,6 @@
 #include "Location.hpp"
 
+#include <execution>
 #include <unordered_set>
 
 namespace thalweg
@@ -7,6 +8,24 @@ namespace thalweg
 auto Location::coordinates(Location const& loc) -> Coordinate
 {
 	return loc.coord;
+}
+
+auto Location::depth_of(Location const& loc) -> double
+{
+	return loc.depth;
+}
+
+auto distance_between(Location const& lhs, Coordinate const& rhs) -> double
+{
+	return distance_between(lhs.coord, rhs);
+}
+auto distance_between(Coordinate const& lhs, Location const& rhs) -> double
+{
+	return distance_between(lhs, rhs.coord);
+}
+auto distance_between(Location const& lhs, Location const& rhs) -> double
+{
+	return distance_between(lhs.coord, rhs.coord);
 }
 
 auto shrink(std::vector<Location> data, unsigned resolution) -> std::vector<Location>
@@ -22,6 +41,7 @@ auto shrink(std::vector<Location> data, unsigned resolution) -> std::vector<Loca
 
 		std::vector<Location> neighbors;
 		std::copy_if(
+			std::execution::par_unseq,
 			data.begin(),
 			data.end(),
 			std::back_inserter(neighbors),
@@ -37,6 +57,39 @@ auto shrink(std::vector<Location> data, unsigned resolution) -> std::vector<Loca
 	}
 
 	return out;
+}
+
+auto to_coordinates(std::vector<Location> const& in) -> std::vector<Coordinate>
+{
+	std::vector<Coordinate> out(in.size());
+	std::transform(
+		std::execution::par_unseq,
+		in.begin(),
+		in.end(),
+		out.begin(),
+		&Location::coordinates);
+	return out;
+}
+
+auto to_depths(std::vector<Location> const& in) -> std::vector<double>
+{
+	std::vector<double> out(in.size());
+	std::transform(
+		std::execution::par_unseq,
+		in.begin(),
+		in.end(),
+		out.begin(),
+		&Location::depth_of);
+	return out;
+}
+
+auto max_depth_of(std::vector<Location> const& v) -> double
+{
+	return std::accumulate(
+		v.begin(),
+		v.end(),
+		0.0,
+		[](double acc, Location val) { return std::max(acc, val.depth); });
 }
 
 auto operator==(Location const& lhs, Location const& rhs) -> bool

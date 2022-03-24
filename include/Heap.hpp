@@ -1,5 +1,6 @@
 #pragma once
 
+#include <execution>
 #include <functional>
 #include <vector>
 #include <utility>
@@ -83,6 +84,7 @@ public:
 	auto decrease_priority(T value, long priority) -> void
 	{
 		auto const iter = std::find_if(
+			std::execution::par_unseq,
 			this->data.begin(),
 			this->data.end(),
 			[&](auto elem){ return elem.second == value; });

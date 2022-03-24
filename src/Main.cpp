@@ -57,7 +57,7 @@ auto accumulate(IterT begin, IterT end, T acc, Fn op) -> T
 
 auto usage(std::string const& name, std::vector<CliOption> const& options) -> std::string
 {
-	auto const option_description = accumulate(
+	auto const option_description = std::accumulate(
 		options.begin(),
 		options.end(),
 		std::string(""),

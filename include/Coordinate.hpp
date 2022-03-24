@@ -1,8 +1,9 @@
 #pragma once
 
+#include <algorithm>
 #include <cmath>
+#include <execution>
 #include <iostream>
-#include <vector>
 
 namespace thalweg
 {
@@ -17,23 +18,19 @@ auto distance_between(Coordinate const&, Coordinate const&) -> double;
 template<typename Iter>
 auto closest_point(Coordinate const& point, Iter begin, Iter end) -> Coordinate
 {
-	if (begin == end)
+	auto const closest = std::min_element(
+		std::execution::par_unseq,
+		begin,
+		end,
+		[&](Coordinate const& lhs, Coordinate const& rhs)
+		{
+			return distance_between(point, lhs) < distance_between(point, rhs);
+		});
+
+	if (closest == end)
 		throw std::runtime_error("empty collection");
 
-	auto best_distance = std::numeric_limits<double>::infinity();
-	auto best_point = point;
-
-	for (auto iter = begin; iter != end; ++iter)
-	{
-		auto const new_distance = distance_between(point, *iter);
-		if (new_distance < best_distance)
-		{
-			best_distance = new_distance;
-			best_point = *iter;
-		}
-	}
-
-	return best_point;
+	return *closest;
 }
 
 // clang requires the allocator be acknowledged in the template
