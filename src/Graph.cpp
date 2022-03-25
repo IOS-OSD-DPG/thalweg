@@ -15,8 +15,8 @@ namespace
 class ShortestPathState
 {
 public:
-	ShortestPathState(std::vector<CoordinatePair> container, CoordinatePair source, CoordinatePair sink)
-		: unvisited_set(std::begin(container), std::end(container))
+	ShortestPathState(CoordinatePair source, CoordinatePair sink)
+		: visited_set()
 		, sink(sink)
 	{
 		update(source, 0.0, source);
@@ -64,16 +64,16 @@ public:
 
 	auto unvisited(CoordinatePair const& destination) -> bool
 	{
-		return unvisited_set.count(destination) > 0;
+		return visited_set.count(destination) == 0;
 	}
 
 	auto visit(CoordinatePair const& destination) -> void
 	{
-		unvisited_set.erase(destination);
+		visited_set.insert(destination);
 	}
 
 private:
-	std::unordered_set<CoordinatePair> unvisited_set;
+	std::unordered_set<CoordinatePair> visited_set;
 	CoordinatePair sink;
 	std::unordered_map<CoordinatePair, std::pair<double, CoordinatePair>> state;
 	PriorityHeap<CoordinatePair> work_queue;
@@ -82,6 +82,7 @@ private:
 
 Graph::Graph(std::vector<Location> data, unsigned resolution)
 	: data(data)
+	, search_tree(to_coordinates(data))
 	, resolution(resolution)
 	, max_depth(max_depth_of(data))
 {
@@ -115,12 +116,10 @@ auto Graph::find(CoordinatePair coord) const -> DataIterator
 
 auto Graph::shortest_path(CoordinatePair const& source, CoordinatePair const& sink) const -> std::vector<Location>
 {
-	auto const coords = to_coordinates(this->data);
+	auto const source_on_grid = search_tree.closest_point(source);
+	auto const sink_on_grid = search_tree.closest_point(sink);
 
-	auto const source_on_grid = closest_point(source, coords);
-	auto const sink_on_grid = closest_point(sink, coords);
-
-	auto state = ShortestPathState(coords, source_on_grid, sink_on_grid);
+	auto state = ShortestPathState(source_on_grid, sink_on_grid);
 
 	while (state.unvisited(sink_on_grid) && state.work_remains())
 	{
@@ -131,7 +130,9 @@ auto Graph::shortest_path(CoordinatePair const& source, CoordinatePair const& si
 			return current != coord && this->adjacent(current, coord) && state.unvisited(coord);
 		};
 
-		for (auto const& neighbor : coords)
+		auto const neighbors = search_tree.neighbors(current);
+
+		for (auto const& neighbor : neighbors)
 		{
 			// avoid unnecessary copy until ranges are available
 			if (!is_neighbor(neighbor))

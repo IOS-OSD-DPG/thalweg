@@ -5,6 +5,7 @@ set(SourceFiles
 	Coordinate.cpp
 	Location.cpp
 	Graph.cpp
+	Search.cpp
 	)
 
 add_library(thalwegCommon STATIC

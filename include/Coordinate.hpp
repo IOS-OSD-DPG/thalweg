@@ -18,6 +18,9 @@ struct Coordinate
 		: degrees(degrees), minutes(minutes), seconds(seconds)
 	{
 	}
+	virtual ~Coordinate() = default;
+
+	virtual auto neighborhood() const -> int;
 
 	virtual explicit operator double() const;
 };
@@ -38,6 +41,11 @@ struct Latitude : public Coordinate
 	{
 	}
 
+	int neighborhood() const override
+	{
+		return Coordinate::neighborhood() * (is_north ? 1 : -1);
+	}
+
 	explicit operator double() const override;
 };
 
@@ -55,6 +63,11 @@ struct Longitude : public Coordinate
 		: Coordinate(coordinate)
 		, is_east(is_east)
 	{
+	}
+
+	int neighborhood() const override
+	{
+		return Coordinate::neighborhood() * (is_east ? 1 : -1);
 	}
 
 	explicit operator double() const override;

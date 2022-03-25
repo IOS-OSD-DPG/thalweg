@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Location.hpp"
+#include "Search.hpp"
 
 #include <vector>
 
@@ -25,6 +26,7 @@ private:
 	auto find(CoordinatePair) const -> DataIterator;
 
 	std::vector<Location> data;
+	SearchTree search_tree;
 	unsigned resolution;
 	double max_depth;
 };

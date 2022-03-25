@@ -51,27 +51,28 @@ TEST_SUITE("GraphTest")
 	TEST_CASE("shortest_path provides a path of nodes containing the source and sink")
 	{
 		auto const data = std::vector<Location> {
-			{CoordinatePair{0, 0}, 1},
-			{CoordinatePair{1, 1}, 1},
+			{CoordinatePair{Latitude({0, 0, 0}, true), Longitude({0, 0, 0}, true)}, 1},
+			{CoordinatePair{Latitude({0, 0, 0.1}, true), Longitude({0, 0, 0.1}, true)}, 1},
 		};
-		auto graph = Graph(data, 200'000);
-		auto const result = graph.shortest_path(CoordinatePair{0, 0}, CoordinatePair{1, 1});
+		auto graph = Graph(data, 400);
+		auto const result = graph.shortest_path(data.front().coord, data.back().coord);
 		CHECK(result == data);
 	}
 
 	TEST_CASE("shortest_path provides a path that does not include useless values")
 	{
 		auto const data = std::vector<Location> {
-			{CoordinatePair{0, 0}, 1},
-			{CoordinatePair{1, 1}, 1},
-			{CoordinatePair{10, 10}, 1},
+			{CoordinatePair{Latitude({0, 0, 0}, true), Longitude({0, 0, 0}, true)}, 1},
+			{CoordinatePair{Latitude({0, 0, 0.1}, true), Longitude({0, 0, 0.1}, true)}, 1},
+			{CoordinatePair{Latitude({0, 0, 1}, true), Longitude({0, 0, 1}, true)}, 1},
+			{CoordinatePair{Latitude({0, 0, 1.1}, true), Longitude({0, 0, 1.1}, true)}, 1},
 		};
-		auto graph = Graph(data, 200'000);
-		auto const result = graph.shortest_path(CoordinatePair{0, 0}, CoordinatePair{1, 1});
+		auto graph = Graph(data, 400);
+		auto const result = graph.shortest_path(data[0].coord, data[1].coord);
 		CHECK(result != data);
 		CHECK(result.size() == 2);
-		CHECK(result[0] == Location{CoordinatePair{0, 0}, 1});
-		CHECK(result[1] == Location{CoordinatePair{1, 1}, 1});
+		CHECK(result[0] == data[0]);
+		CHECK(result[1] == data[1]);
 	}
 
 	TEST_CASE("shortest_path provides a path that roughly maps to the path of deepest values")
@@ -79,24 +80,20 @@ TEST_SUITE("GraphTest")
 		// need an order of magnitude difference between the deepest point and the closer ones
 		auto const km = 1000.0;
 		auto const data = std::vector<Location> {
-			{CoordinatePair{-1, -1}, 140 * km},
-			{CoordinatePair{-1, 0}, 150 * km},
-			{CoordinatePair{-1, 1}, 100 * km},
-			{CoordinatePair{0, -1}, 100 * km},
-			{CoordinatePair{0, 0}, 9 * km},
-			{CoordinatePair{0, 1}, 140 * km},
-			{CoordinatePair{1, -1}, 5 * km},
-			{CoordinatePair{1, 0}, 6 * km},
-			{CoordinatePair{1, 1}, 100 * km},
+			{CoordinatePair{Latitude({0, 0, 1}, false), Longitude({0, 0, 1}, false)}, 140 * km},
+			{CoordinatePair{Latitude({0, 0, 1}, false), Longitude({0, 0, 0}, true)}, 150 * km},
+			{CoordinatePair{Latitude({0, 0, 1}, false), Longitude({0, 0, 1}, true)}, 100 * km},
+			{CoordinatePair{Latitude({0, 0, 0}, true), Longitude({0, 0, 1}, false)}, 100 * km},
+			{CoordinatePair{Latitude({0, 0, 0}, true), Longitude({0, 0, 0}, true)}, 9 * km},
+			{CoordinatePair{Latitude({0, 0, 0}, true), Longitude({0, 0, 1}, true)}, 140 * km},
+			{CoordinatePair{Latitude({0, 0, 1}, false), Longitude({0, 0, 1}, false)}, 5 * km},
+			{CoordinatePair{Latitude({0, 0, 1}, false), Longitude({0, 0, 0}, true)}, 6 * km},
+			{CoordinatePair{Latitude({0, 0, 1}, false), Longitude({0, 0, 1}, true)}, 100 * km},
 		};
-		auto const expected = std::vector<Location> {
-			{CoordinatePair{-1, -1}, 140 * km},
-			{CoordinatePair{-1, 0}, 150 * km},
-			{CoordinatePair{0, 1}, 140 * km},
-			{CoordinatePair{1, 1}, 100 * km},
-		};
-		auto graph = Graph(data, 200'000);
-		auto const result = graph.shortest_path(CoordinatePair{-1, -1}, CoordinatePair{1, 1});
+		// inclusion of search tree has resulted in skipping the second 140km depth
+		auto const expected = std::vector<Location> {data[0], data[1], data[8]};
+		auto graph = Graph(data, 50);
+		auto const result = graph.shortest_path(data.front().coord, data.back().coord);
 		CHECK(result == expected);
 	}
 }

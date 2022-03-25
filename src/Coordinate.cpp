@@ -60,6 +60,11 @@ Coordinate::Coordinate(double input)
 {
 }
 
+auto Coordinate::neighborhood() const -> int
+{
+	return degrees * 3600 + minutes * 60 + int(std::trunc(seconds));
+}
+
 Coordinate::operator double() const
 {
 	return (degrees * 1.0) + (minutes / 60.0) + (seconds / 3600.0);
