@@ -5,7 +5,7 @@
 
 namespace thalweg
 {
-auto Location::coordinates(Location const& loc) -> Coordinate
+auto Location::coordinates(Location const& loc) -> CoordinatePair
 {
 	return loc.coord;
 }
@@ -15,11 +15,11 @@ auto Location::depth_of(Location const& loc) -> double
 	return loc.depth;
 }
 
-auto distance_between(Location const& lhs, Coordinate const& rhs) -> double
+auto distance_between(Location const& lhs, CoordinatePair const& rhs) -> double
 {
 	return distance_between(lhs.coord, rhs);
 }
-auto distance_between(Coordinate const& lhs, Location const& rhs) -> double
+auto distance_between(CoordinatePair const& lhs, Location const& rhs) -> double
 {
 	return distance_between(lhs, rhs.coord);
 }
@@ -58,9 +58,9 @@ auto shrink(std::vector<Location> data, unsigned resolution) -> std::vector<Loca
 	return out;
 }
 
-auto to_coordinates(std::vector<Location> const& in) -> std::vector<Coordinate>
+auto to_coordinates(std::vector<Location> const& in) -> std::vector<CoordinatePair>
 {
-	std::vector<Coordinate> out(in.size());
+	std::vector<CoordinatePair> out(in.size());
 	std::transform(
 		in.begin(),
 		in.end(),

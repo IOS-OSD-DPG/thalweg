@@ -10,18 +10,18 @@ namespace thalweg
 {
 struct Location
 {
-	Coordinate coord;
+	CoordinatePair coord;
 	double depth;
 
-	static auto coordinates(Location const&) -> Coordinate;
+	static auto coordinates(Location const&) -> CoordinatePair;
 	static auto depth_of(Location const&) -> double;
 };
 
-auto distance_between(Location const& lhs, Coordinate const& rhs) -> double;
-auto distance_between(Coordinate const& lhs, Location const& rhs) -> double;
+auto distance_between(Location const& lhs, CoordinatePair const& rhs) -> double;
+auto distance_between(CoordinatePair const& lhs, Location const& rhs) -> double;
 auto distance_between(Location const& lhs, Location const& rhs) -> double;
 
-auto to_coordinates(std::vector<Location> const&) -> std::vector<Coordinate>;
+auto to_coordinates(std::vector<Location> const&) -> std::vector<CoordinatePair>;
 auto to_depths(std::vector<Location> const&) -> std::vector<double>;
 
 auto max_depth_of(std::vector<Location> const&) -> double;
@@ -37,6 +37,6 @@ struct std::hash<thalweg::Location>
 {
 	auto operator()(thalweg::Location const& point) const noexcept -> size_t
 	{
-		return std::hash<thalweg::Coordinate>()(point.coord) ^ std::hash<double>()(point.depth);
+		return std::hash<thalweg::CoordinatePair>()(point.coord) ^ std::hash<double>()(point.depth);
 	}
 };

@@ -15,14 +15,14 @@ namespace
 class ShortestPathState
 {
 public:
-	ShortestPathState(std::vector<Coordinate> container, Coordinate source, Coordinate sink)
+	ShortestPathState(std::vector<CoordinatePair> container, CoordinatePair source, CoordinatePair sink)
 		: unvisited_set(std::begin(container), std::end(container))
 		, sink(sink)
 	{
 		update(source, 0.0, source);
 	}
 
-	auto update(Coordinate destination, double distance, Coordinate previous) -> void
+	auto update(CoordinatePair destination, double distance, CoordinatePair previous) -> void
 	{
 		bool const already_present = contains(destination);
 		auto const priority = std::lround(distance + distance_between(sink, destination));
@@ -37,22 +37,22 @@ public:
 		}
 	}
 
-	auto distance_to(Coordinate const& destination) const -> double
+	auto distance_to(CoordinatePair const& destination) const -> double
 	{
 		return state.at(destination).first;
 	}
 
-	auto previous(Coordinate const& destination) const -> Coordinate
+	auto previous(CoordinatePair const& destination) const -> CoordinatePair
 	{
 		return state.at(destination).second;
 	}
 
-	auto contains(Coordinate const& destination) const -> bool
+	auto contains(CoordinatePair const& destination) const -> bool
 	{
 		return state.find(destination) != state.end();
 	}
 
-	auto get_next() -> Coordinate
+	auto get_next() -> CoordinatePair
 	{
 		return work_queue.pop();
 	}
@@ -62,21 +62,21 @@ public:
 		return !work_queue.empty();
 	}
 
-	auto unvisited(Coordinate const& destination) -> bool
+	auto unvisited(CoordinatePair const& destination) -> bool
 	{
 		return unvisited_set.count(destination) > 0;
 	}
 
-	auto visit(Coordinate const& destination) -> void
+	auto visit(CoordinatePair const& destination) -> void
 	{
 		unvisited_set.erase(destination);
 	}
 
 private:
-	std::unordered_set<Coordinate> unvisited_set;
-	Coordinate sink;
-	std::unordered_map<Coordinate, std::pair<double, Coordinate>> state;
-	PriorityHeap<Coordinate> work_queue;
+	std::unordered_set<CoordinatePair> unvisited_set;
+	CoordinatePair sink;
+	std::unordered_map<CoordinatePair, std::pair<double, CoordinatePair>> state;
+	PriorityHeap<CoordinatePair> work_queue;
 };
 } // namespace
 
@@ -87,25 +87,25 @@ Graph::Graph(std::vector<Location> data, unsigned resolution)
 {
 }
 
-auto Graph::contains(Coordinate coord) const -> bool
+auto Graph::contains(CoordinatePair coord) const -> bool
 {
 	return this->find(coord) != this->data.end();
 }
 
-auto Graph::adjacent(Coordinate lhs, Coordinate rhs) const -> bool
+auto Graph::adjacent(CoordinatePair lhs, CoordinatePair rhs) const -> bool
 {
 	return this->contains(lhs) && this->contains(rhs) && distance_between(lhs, rhs) < resolution;
 }
 
-auto Graph::weight(Coordinate coord) const -> double
+auto Graph::weight(CoordinatePair coord) const -> double
 {
 	auto iter = this->find(coord);
 	if (iter == this->data.end())
-		return std::numeric_limits<double>::quiet_NaN();
+		return std::numeric_limits<double>::infinity();
 	return this->max_depth - iter->depth + 1;
 }
 
-auto Graph::find(Coordinate coord) const -> DataIterator
+auto Graph::find(CoordinatePair coord) const -> DataIterator
 {
 	return std::find_if(
 		this->data.begin(),
@@ -113,7 +113,7 @@ auto Graph::find(Coordinate coord) const -> DataIterator
 		[&](Location const& loc) { return loc.coord == coord; });
 }
 
-auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) const -> std::vector<Location>
+auto Graph::shortest_path(CoordinatePair const& source, CoordinatePair const& sink) const -> std::vector<Location>
 {
 	auto const coords = to_coordinates(this->data);
 
@@ -124,9 +124,9 @@ auto Graph::shortest_path(Coordinate const& source, Coordinate const& sink) cons
 
 	while (state.unvisited(sink_on_grid) && state.work_remains())
 	{
-		Coordinate current = state.get_next();
+		CoordinatePair current = state.get_next();
 
-		auto is_neighbor = [&, this](Coordinate const& coord)
+		auto is_neighbor = [&, this](CoordinatePair const& coord)
 		{
 			return current != coord && this->adjacent(current, coord) && state.unvisited(coord);
 		};

@@ -26,15 +26,15 @@ auto read_data(std::istream& contents) -> std::vector<Location>
 		auto const lat = parse_dms_latitude(vals[0]);
 		auto const lon = parse_dms_longitude(vals[1]);
 		auto const depth = parse_depth(vals[2]);
-		out.push_back(Location{Coordinate{lat, lon}, depth});
+		out.push_back(Location{CoordinatePair{lat, lon}, depth});
 	}
 
 	return out;
 }
 
-auto read_corners(std::istream& contents) -> std::vector<Coordinate>
+auto read_corners(std::istream& contents) -> std::vector<CoordinatePair>
 {
-	std::vector<Coordinate> out;
+	std::vector<CoordinatePair> out;
 
 	for (std::array<char, buf_size> buffer; contents.getline(buffer.data(), buf_size);)
 	{
@@ -46,7 +46,7 @@ auto read_corners(std::istream& contents) -> std::vector<Coordinate>
 			throw std::runtime_error(line + " has an unexpected number of values");
 		auto const lat = parse_dms_latitude(vals[0]);
 		auto const lon = parse_dms_longitude(vals[1]);
-		out.push_back(Coordinate{lat, lon});
+		out.push_back(CoordinatePair{lat, lon});
 	}
 
 	return out;

@@ -14,12 +14,12 @@ TEST_SUITE("LocationTest")
 	TEST_CASE("to_coordinates works on vectors")
 	{
 		auto const contents = std::vector<Location> {
-			Location {Coordinate {0, 0}, 123},
-			Location {Coordinate {1, 1}, 321},
+			Location {CoordinatePair {0, 0}, 123},
+			Location {CoordinatePair {1, 1}, 321},
 		};
-		auto const expected = std::vector<Coordinate> {
-			Coordinate {0, 0},
-			Coordinate {1, 1},
+		auto const expected = std::vector<CoordinatePair> {
+			CoordinatePair {0, 0},
+			CoordinatePair {1, 1},
 		};
 		CHECK(to_coordinates(contents) == expected);
 	}
@@ -27,8 +27,8 @@ TEST_SUITE("LocationTest")
 	TEST_CASE("to_depths works on vectors")
 	{
 		auto const contents = std::vector<Location> {
-			Location {Coordinate {0, 0}, 123},
-			Location {Coordinate {1, 1}, 321},
+			Location {CoordinatePair {0, 0}, 123},
+			Location {CoordinatePair {1, 1}, 321},
 		};
 		auto const expected = std::vector<double> {123, 321};
 		CHECK(to_depths(contents) == expected);
@@ -44,13 +44,13 @@ TEST_SUITE("LocationTest")
 	TEST_CASE("max_depth_of returns the deepest value")
 	{
 		auto const data = std::vector<Location> {
-			Location {Coordinate{0, 0}, 0},
-			Location {Coordinate{1, 0}, 1},
-			Location {Coordinate{0, 1}, 2},
-			Location {Coordinate{1, 1}, 3},
-			Location {Coordinate{-1, 0}, 4},
-			Location {Coordinate{0, -1}, 5},
-			Location {Coordinate{-1, -1}, 6},
+			Location {CoordinatePair{0, 0}, 0},
+			Location {CoordinatePair{1, 0}, 1},
+			Location {CoordinatePair{0, 1}, 2},
+			Location {CoordinatePair{1, 1}, 3},
+			Location {CoordinatePair{-1, 0}, 4},
+			Location {CoordinatePair{0, -1}, 5},
+			Location {CoordinatePair{-1, -1}, 6},
 		};
 		CHECK(max_depth_of(data) == doctest::Approx(6.0));
 	}
@@ -58,9 +58,9 @@ TEST_SUITE("LocationTest")
 	TEST_CASE("shrink shrinks its input, maintaining the deepest point")
 	{
 		auto const data = std::vector<Location> {
-			Location {Coordinate{0, 0}, 50},
-			Location {Coordinate{0.01, 0.01}, 100},
-			Location {Coordinate{-0.01, -0.01}, 50},
+			Location {CoordinatePair{0, 0}, 50},
+			Location {CoordinatePair{0.01, 0.01}, 100},
+			Location {CoordinatePair{-0.01, -0.01}, 50},
 		};
 		auto const deepest_point = max_depth_of(data);
 
@@ -70,10 +70,10 @@ TEST_SUITE("LocationTest")
 		CHECK(new_deepest_point == deepest_point);
 	}
 
-	TEST_CASE("distance_between can use Location objects as well as Coordinate objects")
+	TEST_CASE("distance_between can use Location objects as well as CoordinatePair objects")
 	{
-		auto const point1 = Location{Coordinate{49, -122}, 100};
-		auto const point2 = Location{Coordinate{49, -123}, 100};
+		auto const point1 = Location{CoordinatePair{49, -122}, 100};
+		auto const point2 = Location{CoordinatePair{49, -123}, 100};
 		auto const expected = doctest::Approx(distance_between(point1, point2));
 		CHECK(distance_between(point1, point2) == expected);
 		CHECK(distance_between(point1.coord, point2) == expected);

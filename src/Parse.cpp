@@ -11,28 +11,25 @@ namespace thalweg
 namespace
 {
 
-auto get_dms_coord(std::string const& value, int bound, bool negate) -> double
+auto get_dms_coord(std::string const& value, int bound) -> Coordinate
 {
-	double out;
 	auto const split_vals = thalweg::utils::split(value, '-');
 	if (split_vals.size() != 3)
 		throw std::runtime_error(value + " has an unexpected number of sections");
 
-	int const degrees = std::stoi(split_vals[0]);
-	if (degrees < -bound || degrees > bound)
+	unsigned const degrees = std::stoi(split_vals[0]);
+	if (degrees > bound)
 		throw std::runtime_error(value + " has a degree value outside the expected bounds");
 
-	int const minutes = std::stoi(split_vals[1]);
-	if (minutes < 0 || minutes > 60)
+	unsigned const minutes = std::stoi(split_vals[1]);
+	if (minutes > 60)
 		throw std::runtime_error(value + " has a minute value outside the expected bounds");
 
 	double const seconds = std::stod(split_vals[2]);
 	if (seconds < 0.0 || seconds > 60.0)
 		throw std::runtime_error(value + " has a second value outside the expected bounds");
 
-	out = degrees + (minutes / 60.0) + (seconds / 3600.0);
-
-	return negate ? -out : out;
+	return Coordinate{degrees, minutes, seconds};
 }
 
 auto dash_only_at_start(std::string const& value) -> bool
@@ -51,7 +48,7 @@ auto is_legal_in_number(char c) -> bool
 }
 } // namespace
 
-auto parse_dms_latitude(std::string const& latitude) -> double
+auto parse_dms_latitude(std::string const& latitude) -> Latitude
 {
 	auto const direction = latitude.back();
 	auto const trimmed = latitude.substr(0, latitude.size() - 1);
@@ -59,16 +56,16 @@ auto parse_dms_latitude(std::string const& latitude) -> double
 	{
 	case 'n':
 	case 'N':
-		return get_dms_coord(trimmed, 90, false);
+		return Latitude(get_dms_coord(trimmed, 90), true);
 	case 's':
 	case 'S':
-		return get_dms_coord(trimmed, 90, true);
+		return Latitude(get_dms_coord(trimmed, 90), false);
 	default:
 		throw std::runtime_error(latitude + " contains unexpected direction marker " + direction);
 	}
 }
 
-auto parse_dms_longitude(std::string const& longitude) -> double
+auto parse_dms_longitude(std::string const& longitude) -> Longitude
 {
 	auto const direction = longitude.back();
 	auto const trimmed = longitude.substr(0, longitude.size() - 1);
@@ -76,10 +73,10 @@ auto parse_dms_longitude(std::string const& longitude) -> double
 	{
 	case 'e':
 	case 'E':
-		return get_dms_coord(trimmed, 180, false);
+		return Longitude(get_dms_coord(trimmed, 180), true);
 	case 'w':
 	case 'W':
-		return get_dms_coord(trimmed, 180, true);
+		return Longitude(get_dms_coord(trimmed, 180), false);
 	default:
 		throw std::runtime_error(longitude + " contains unexpected directon marker " + direction);
 	}

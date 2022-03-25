@@ -9,13 +9,13 @@ TEST_SUITE("ParseTest")
 
 	TEST_CASE("parse_dms_latitude returns 0 at equator")
 	{
-		CHECK(parse_dms_latitude("0-0-0.0N") == doctest::Approx(0.0));
-		CHECK(parse_dms_latitude("0-0-0.0S") == doctest::Approx(0.0));
+		CHECK(parse_dms_latitude("0-0-0.0N") == Latitude(Coordinate(0, 0, 0.0), true));
+		CHECK(parse_dms_latitude("0-0-0.0S") == Latitude(Coordinate(0, 0, 0.0), false));
 	}
 
 	TEST_CASE("parse_dms_latitude returns correct decimal conversion")
 	{
-		CHECK(parse_dms_latitude("49-12-00.000N") == doctest::Approx(49.2));
+		CHECK(parse_dms_latitude("49-12-00.000N") == Latitude(Coordinate(49, 12, 0.0), true));
 	}
 
 	TEST_CASE("parse_dms_latitude rejects non-conformant values")
@@ -30,13 +30,13 @@ TEST_SUITE("ParseTest")
 
 	TEST_CASE("parse_dms_longitude returns 0 at meridian")
 	{
-		CHECK(parse_dms_longitude("0-0-0.0E") == doctest::Approx(0.0));
-		CHECK(parse_dms_longitude("0-0-0.0W") == doctest::Approx(0.0));
+		CHECK(parse_dms_longitude("0-0-0.0E") == Longitude(Coordinate(0, 0, 0.0), true));
+		CHECK(parse_dms_longitude("0-0-0.0W") == Longitude(Coordinate(0, 0, 0.0), false));
 	}
 
 	TEST_CASE("parse_dms_longitude returns correct decimal conversion")
 	{
-		CHECK(parse_dms_longitude("112-56-24.360W") == doctest::Approx(-112.94));
+		CHECK(parse_dms_longitude("112-56-24.360W") == Longitude(Coordinate(112, 56, 24.36), false));
 	}
 
 	TEST_CASE("parse_dms_longitude rejects non-conformant values")
