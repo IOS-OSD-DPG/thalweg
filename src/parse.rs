@@ -88,13 +88,28 @@ mod test {
     }
 
     #[test]
+    fn rejects_improper_latitude() {
+        assert_eq!(parse_dms_latitude("not a latitude"), None);
+    }
+
+    #[test]
     fn reads_proper_longitude() {
         assert_eq!(parse_dms_longitude("122-56-24.360E"), Some(122.9401));
         assert_eq!(parse_dms_longitude("122-56-24.360W"), Some(-122.9401));
     }
 
     #[test]
+    fn rejects_improper_longitude() {
+        assert_eq!(parse_dms_longitude("not a longitude"), None);
+    }
+
+    #[test]
     fn reads_proper_float() {
         assert_eq!(parse_float("-0.99565"), Some(-0.99565));
+    }
+
+    #[test]
+    fn rejects_improper_float() {
+        assert_eq!(parse_float("not a float"), None);
     }
 }

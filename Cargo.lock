@@ -127,7 +127,7 @@ dependencies = [
  "log",
  "num-traits",
  "robust",
- "rstar",
+ "rstar 0.8.4",
 ]
 
 [[package]]
@@ -138,7 +138,7 @@ checksum = "658ffd4025e593f0b64e8fa7a1afc4082e4471ac823034b9d4e338edc9adc6fb"
 dependencies = [
  "approx",
  "num-traits",
- "rstar",
+ "rstar 0.8.4",
 ]
 
 [[package]]
@@ -314,6 +314,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "rstar"
+version = "0.9.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fc6fc513b8c3853e43a0c3f909ded14ffa82e5170c9c5f6fb175f9c85c8a433"
+dependencies = [
+ "heapless",
+ "num-traits",
+ "pdqselect",
+ "smallvec",
+]
+
+[[package]]
 name = "smallvec"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -363,6 +375,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "geo",
+ "rstar 0.9.2",
 ]
 
 [[package]]

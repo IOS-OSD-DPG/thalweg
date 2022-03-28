@@ -1,7 +1,9 @@
+use std::ffi::OsString;
 use std::fs::{self, File};
 use std::io::{self, BufReader};
 
 use thalweg::read;
+use thalweg::generator::ThalwegGenerator;
 
 use clap::Parser;
 
@@ -11,14 +13,14 @@ use clap::Parser;
 struct Args {
     /// Directory containing NONNA-10 bathymetry data
     #[clap(short, long)]
-    data: String,
+    data: OsString,
 
     /// File containing the beginning and end of the inlet
     #[clap(short, long)]
-    corners: String,
+    corners: OsString,
 
     /// Resolution of desired thalweg
-    #[clap(short, long, default_value_t = 10)]
+    #[clap(short, long, default_value_t = 20)]
     resolution: usize,
 }
 
@@ -37,14 +39,22 @@ fn main() -> io::Result<()> {
     println!("{} data values", data.len());
     // read corners from corners
     let corners = {
-        println!("reading {}", args.corners);
+        println!("reading {:?}", args.corners);
         let corners = File::open(args.corners)?;
         let mut reader = BufReader::new(corners);
         read::read_corner_lines(&mut reader)?
     };
     println!("corners: {:?}", corners);
     // set up data
+    let generator = ThalwegGenerator::from_points(data, args.resolution);
+
     // run search
+    if let Some(path) = generator.thalweg(corners[0], corners[1]) {
+        // got a path
+        println!("path contians {} points", path.len());
+    } else {
+        eprintln!("No path found");
+    }
 
     Ok(())
 }
