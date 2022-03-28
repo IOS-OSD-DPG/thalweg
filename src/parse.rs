@@ -43,15 +43,15 @@ fn parse_dms_coord(input: &str, bound: usize, factor: f64) -> Option<f64> {
         return None;
     }
     let degrees = sections[0].parse::<usize>().ok()?;
-    if degrees > bound {
+    if !(0..bound).contains(&degrees) {
         return None;
     }
     let minutes = sections[1].parse::<usize>().ok()?;
-    if minutes > 59 {
+    if !(0..60).contains(&minutes) {
         return None;
     }
     let seconds = sections[2].parse::<f64>().ok()?;
-    if seconds < 0.0 || seconds >= 60.0 {
+    if !(0.0..60.0).contains(&seconds) {
         return None;
     }
     Some(factor * (degrees as f64 + (minutes as f64 / 60.0) + (seconds / 3600.0)))
