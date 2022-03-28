@@ -1,6 +1,9 @@
 use crate::bathymetry::{Bathymetry, Point};
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::cmp::Reverse;
+use std::collections::{HashMap, HashSet};
+
+use priority_queue::PriorityQueue;
 
 use rstar::RTree;
 
@@ -29,18 +32,19 @@ impl ThalwegGenerator {
 
         let mut visited = HashSet::new();
         let mut state = HashMap::new();
-        let mut work_queue = VecDeque::new();
-        work_queue.push_back(source_in_tree);
+        let mut work_queue = PriorityQueue::new();
+        work_queue.push(source_in_tree, Reverse(0));
 
-        while let Some(current) = work_queue.pop_front() {
-            let distance_to_here = state.get(&current.location()).map(|&(d, _)| d).unwrap_or(f64::INFINITY);
+        while let Some((current, _)) = work_queue.pop() {
+            let distance_to_here = state.get(current).map(|&(d, _)| d).unwrap_or(f64::INFINITY);
 
             for neighbor in self.points.locate_within_distance(current.point(), distance_squared) {
                 let weighted_distance = distance_to_here + self.weight_of(neighbor);
-                let old_distance = state.get(&neighbor.location()).map(|&(d, _)| d).unwrap_or(f64::INFINITY);
-                if !state.contains_key(&neighbor.location()) || weighted_distance < old_distance {
-                    state.insert(neighbor.location(), (weighted_distance, current));
-                    work_queue.push_back(neighbor);
+                let old_distance = state.get(&neighbor).map(|&(d, _)| d).unwrap_or(f64::INFINITY);
+                let distance_to_sink = neighbor.distance_to(&sink_in_tree) as isize;
+                if !state.contains_key(&neighbor) || weighted_distance < old_distance {
+                    state.insert(neighbor, (weighted_distance, current));
+                    work_queue.push(neighbor, Reverse(distance_to_sink));
                 }
             }
             visited.insert(current.location());
@@ -58,7 +62,7 @@ impl ThalwegGenerator {
         let mut current = sink_in_tree;
         while current != source_in_tree {
             path.push(current.clone());
-            current = self.points.nearest_neighbor(&state.get(&current.location()).map(|&(_, p)| p.clone())?.point())?;
+            current = self.points.nearest_neighbor(&state.get(&current).map(|&(_, p)| p.clone())?.point())?;
         }
         path.push(current.clone());
 
@@ -103,8 +107,7 @@ mod test {
     }
 
     #[test]
-    fn thalweg_provides_a_path_that_roughly_maps_to_the_path_of_deepest_values() {
-        // need an order of magnitude difference between the deepest point and the closer ones
+    fn thalweg_provides_a_path() {
         let km = 1000.0;
         let one_second = 1.0/3600.0;
         let data = vec![
@@ -118,7 +121,7 @@ mod test {
             Bathymetry::new(one_second, 0.0, 6.0 * km),
             Bathymetry::new(one_second, one_second, 100.0 * km),
         ];
-        let expected = vec![data[0].clone(), data[1].clone(), data[2].clone(), data[5].clone(), data[8].clone()];
+        let expected = vec![data[0].clone(), data[1].clone(), data[4].clone(), data[7].clone(), data[8].clone()];
         let generator = ThalwegGenerator::from_points(data, 40);
         let path = generator.thalweg(expected.first().unwrap().point(), expected.last().unwrap().point());
         assert_eq!(path, Some(expected));
