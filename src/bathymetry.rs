@@ -1,6 +1,6 @@
 use std::cmp::{Eq, PartialEq};
 use std::fmt;
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 
 use geo;
 use geo::algorithm::haversine_distance::HaversineDistance;
@@ -10,19 +10,20 @@ use rstar::{PointDistance, RTreeObject};
 pub type Point = (f64, f64);
 pub type Location = (isize, isize);
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Bathymetry {
     location: Location,
-    depth: f64,
+    depth: isize,
 }
 
-const PRECISION: f64 = 1000000.0;
+const COORD_PRECISION: f64 = 1000000.0;
+const DEPTH_PRECISION: f64 = 1000.0;
 
 impl Bathymetry {
     pub fn new(latitude: f64, longitude: f64, depth: f64) -> Self {
         Self {
-            location: ((longitude * PRECISION) as isize, (latitude * PRECISION) as isize),
-            depth,
+            location: ((longitude * COORD_PRECISION) as isize, (latitude * COORD_PRECISION) as isize),
+            depth: (depth * DEPTH_PRECISION) as isize,
         }
     }
 
@@ -32,11 +33,11 @@ impl Bathymetry {
 
     pub fn point(&self) -> Point {
         let (longitude, latitude) = self.location;
-        ((longitude as f64) / PRECISION, (latitude as f64) / PRECISION)
+        ((longitude as f64) / COORD_PRECISION, (latitude as f64) / COORD_PRECISION)
     }
 
     pub fn depth(&self) -> f64 {
-        self.depth
+        self.depth as f64 / DEPTH_PRECISION
     }
 
     pub fn distance_to(&self, other: &Bathymetry) -> f64 {
@@ -62,21 +63,6 @@ impl PointDistance for Bathymetry {
         distance * distance
     }
 }
-
-impl Hash for Bathymetry {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        // self.location should be enough for our purposes
-        self.location.hash(state);
-    }
-}
-
-impl PartialEq for Bathymetry {
-    fn eq(&self, other: &Self) -> bool {
-        self.location == other.location
-    }
-}
-
-impl Eq for Bathymetry {}
 
 impl fmt::Display for Bathymetry {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -134,5 +120,12 @@ mod tests {
         let distance_km = start.distance_to(&end) / 1000.0;
         // distance should be ~19km
         assert!((18.5..19.5).contains(&distance_km));
+    }
+
+    #[test]
+    fn depth_results_in_not_equal() {
+        let a = Bathymetry::new(0.0, 0.0, 0.0);
+        let b = Bathymetry::new(0.0, 0.0, 1.0);
+        assert_ne!(a, b);
     }
 }
