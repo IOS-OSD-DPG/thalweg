@@ -1,7 +1,7 @@
 use crate::bathymetry::{Bathymetry, Point};
 
 use std::cmp::Reverse;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use priority_queue::PriorityQueue;
 
@@ -34,7 +34,6 @@ impl ThalwegGenerator {
         // RTree uses distance^2 in locate_within_distance
         let distance_squared = (self.resolution * self.resolution) as f64;
 
-        let mut visited = HashSet::new();
         let mut state = HashMap::new();
         let mut work_queue = PriorityQueue::new();
         work_queue.push(source_in_tree, Reverse(0));
@@ -59,14 +58,13 @@ impl ThalwegGenerator {
                     work_queue.push(neighbor, Reverse(f_n as isize));
                 }
             }
-            visited.insert(current.location());
 
-            if visited.contains(&sink_in_tree.location()) {
+            if current == sink_in_tree {
                 break;
             }
         }
 
-        if !visited.contains(&sink_in_tree.location()) {
+        if !state.contains_key(sink_in_tree) {
             return None;
         }
 
