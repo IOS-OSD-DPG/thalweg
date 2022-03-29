@@ -39,12 +39,14 @@ impl ThalwegGenerator {
             let distance_to_here = state.get(current).map(|&(d, _)| d).unwrap_or(f64::INFINITY);
 
             for neighbor in self.points.locate_within_distance(current.point(), distance_squared) {
-                let weighted_distance = distance_to_here + self.weight_of(neighbor);
+                // use A* names for to make comparison easier
+                let g_n = distance_to_here + self.weight_of(neighbor);
                 let old_distance = state.get(&neighbor).map(|&(d, _)| d).unwrap_or(f64::INFINITY);
-                let distance_to_sink = neighbor.distance_to(&sink_in_tree) as isize;
-                if !state.contains_key(&neighbor) || weighted_distance < old_distance {
-                    state.insert(neighbor, (weighted_distance, current));
-                    work_queue.push(neighbor, Reverse(distance_to_sink));
+                if !state.contains_key(&neighbor) || g_n < old_distance {
+                    state.insert(neighbor, (g_n, current));
+                    let h_n = neighbor.distance_to(&sink_in_tree);
+                    let f_n = g_n + h_n;
+                    work_queue.push(neighbor, Reverse(f_n as isize));
                 }
             }
             visited.insert(current.location());
