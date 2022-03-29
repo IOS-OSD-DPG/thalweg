@@ -15,7 +15,11 @@ pub struct ThalwegGenerator {
 
 impl ThalwegGenerator {
     pub fn from_points(points: Vec<Bathymetry>, resolution: usize) -> Self {
-        let max_depth = points.iter().map(Bathymetry::depth).reduce(f64::max).expect("no points given to ThalwegGenerator");
+        let max_depth = points
+            .iter()
+            .map(Bathymetry::depth)
+            .reduce(f64::max)
+            .expect("no points given to ThalwegGenerator");
         Self {
             points: RTree::bulk_load(points),
             max_depth,
@@ -38,10 +42,16 @@ impl ThalwegGenerator {
         while let Some((current, _)) = work_queue.pop() {
             let distance_to_here = state.get(current).map(|&(d, _)| d).unwrap_or(f64::INFINITY);
 
-            for neighbor in self.points.locate_within_distance(current.point(), distance_squared) {
+            for neighbor in self
+                .points
+                .locate_within_distance(current.point(), distance_squared)
+            {
                 // use A* names for to make comparison easier
                 let g_n = distance_to_here + self.weight_of(neighbor);
-                let old_distance = state.get(&neighbor).map(|&(d, _)| d).unwrap_or(f64::INFINITY);
+                let old_distance = state
+                    .get(&neighbor)
+                    .map(|&(d, _)| d)
+                    .unwrap_or(f64::INFINITY);
                 if !state.contains_key(&neighbor) || g_n < old_distance {
                     state.insert(neighbor, (g_n, current));
                     let h_n = neighbor.distance_to(&sink_in_tree);
@@ -64,7 +74,9 @@ impl ThalwegGenerator {
         let mut current = sink_in_tree;
         while current != source_in_tree {
             path.push(current.clone());
-            current = self.points.nearest_neighbor(&state.get(&current).map(|&(_, p)| p.clone())?.point())?;
+            current = self
+                .points
+                .nearest_neighbor(&state.get(&current).map(|&(_, p)| p.clone())?.point())?;
         }
         path.push(current.clone());
 
@@ -104,14 +116,17 @@ mod test {
             Bathymetry::new(0.00001, 0.00001, 0.0),
         ];
         let generator = ThalwegGenerator::from_points(data.clone(), 400);
-        let path = generator.thalweg(expected.first().unwrap().point(), expected.last().unwrap().point());
+        let path = generator.thalweg(
+            expected.first().unwrap().point(),
+            expected.last().unwrap().point(),
+        );
         assert_eq!(path, Some(expected));
     }
 
     #[test]
     fn thalweg_provides_a_path() {
         let km = 1000.0;
-        let one_second = 1.0/3600.0;
+        let one_second = 1.0 / 3600.0;
         let data = vec![
             Bathymetry::new(-1.0 * one_second, -1.0 * one_second, 140.0 * km),
             Bathymetry::new(-1.0 * one_second, 0.0, 150.0 * km),
@@ -123,9 +138,18 @@ mod test {
             Bathymetry::new(one_second, 0.0, 6.0 * km),
             Bathymetry::new(one_second, one_second, 100.0 * km),
         ];
-        let expected = vec![data[0].clone(), data[1].clone(), data[4].clone(), data[7].clone(), data[8].clone()];
+        let expected = vec![
+            data[0].clone(),
+            data[1].clone(),
+            data[4].clone(),
+            data[7].clone(),
+            data[8].clone(),
+        ];
         let generator = ThalwegGenerator::from_points(data, 40);
-        let path = generator.thalweg(expected.first().unwrap().point(), expected.last().unwrap().point());
+        let path = generator.thalweg(
+            expected.first().unwrap().point(),
+            expected.last().unwrap().point(),
+        );
         assert_eq!(path, Some(expected));
     }
 }

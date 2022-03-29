@@ -34,7 +34,7 @@ pub fn parse_float(input: &str) -> Option<f64> {
 }
 
 fn trim_last(input: &str) -> &str {
-    &input[..input.len()-1]
+    &input[..input.len() - 1]
 }
 
 fn parse_dms_coord(input: &str, bound: usize, factor: f64) -> Option<f64> {

@@ -69,7 +69,10 @@ mod test {
         let source = "0-0-0.0N 0-0-0.0E 0.0\n0-0-0.0N 0-0-0.0E 0.0";
         let mut reader = BufReader::new(source.as_bytes());
         let actual = read_data_lines(&mut reader);
-        let expected = vec![Bathymetry::new(0.0, 0.0, 0.0), Bathymetry::new(0.0, 0.0, 0.0)];
+        let expected = vec![
+            Bathymetry::new(0.0, 0.0, 0.0),
+            Bathymetry::new(0.0, 0.0, 0.0),
+        ];
         assert!(actual.is_ok());
         assert_eq!(actual.unwrap(), expected);
     }

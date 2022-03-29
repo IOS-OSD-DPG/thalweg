@@ -2,8 +2,8 @@ use std::ffi::OsString;
 use std::fs::{self, File};
 use std::io::{self, BufReader, Write};
 
-use thalweg::read;
 use thalweg::generator::ThalwegGenerator;
+use thalweg::read;
 
 use clap::Parser;
 

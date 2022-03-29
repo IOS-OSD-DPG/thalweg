@@ -22,7 +22,10 @@ const DEPTH_PRECISION: f64 = 1000.0;
 impl Bathymetry {
     pub fn new(latitude: f64, longitude: f64, depth: f64) -> Self {
         Self {
-            location: ((longitude * COORD_PRECISION) as isize, (latitude * COORD_PRECISION) as isize),
+            location: (
+                (longitude * COORD_PRECISION) as isize,
+                (latitude * COORD_PRECISION) as isize,
+            ),
             depth: (depth * DEPTH_PRECISION) as isize,
         }
     }
@@ -33,7 +36,10 @@ impl Bathymetry {
 
     pub fn point(&self) -> Point {
         let (longitude, latitude) = self.location;
-        ((longitude as f64) / COORD_PRECISION, (latitude as f64) / COORD_PRECISION)
+        (
+            (longitude as f64) / COORD_PRECISION,
+            (latitude as f64) / COORD_PRECISION,
+        )
     }
 
     pub fn depth(&self) -> f64 {
@@ -75,7 +81,19 @@ impl fmt::Display for Bathymetry {
         let lon_minutes = ((longitude.abs() * 60.0).trunc() as isize) % 60;
         let lon_seconds = (longitude.abs() * 3600.0).rem_euclid(60.0);
         let ew = if longitude < 0.0 { 'W' } else { 'E' };
-        write!(f, "{}-{}-{:.3}{} {}-{}-{:.3}{} {}", lat_degrees, lat_minutes, lat_seconds, ns, lon_degrees, lon_minutes, lon_seconds, ew, self.depth)
+        write!(
+            f,
+            "{}-{}-{:.3}{} {}-{}-{:.3}{} {}",
+            lat_degrees,
+            lat_minutes,
+            lat_seconds,
+            ns,
+            lon_degrees,
+            lon_minutes,
+            lon_seconds,
+            ew,
+            self.depth
+        )
     }
 }
 
