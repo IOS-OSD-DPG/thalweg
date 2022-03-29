@@ -41,6 +41,7 @@ fn main() -> io::Result<()> {
         data.extend(read::read_data_lines(&mut reader)?);
     }
     println!("{} data values", data.len());
+    let only_positive = data.into_iter().filter(|bath| bath.depth() > 0.0).collect();
     // read corners from corners
     let corners = {
         println!("reading {:?}", args.corners);
@@ -50,7 +51,7 @@ fn main() -> io::Result<()> {
     };
     println!("corners: {:?}", corners);
     // set up data
-    let generator = ThalwegGenerator::from_points(data, args.resolution);
+    let generator = ThalwegGenerator::from_points(only_positive, args.resolution);
 
     // run search
     if let Some(path) = generator.thalweg(corners[0], corners[1]) {
