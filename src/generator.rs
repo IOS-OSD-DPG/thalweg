@@ -55,7 +55,12 @@ impl ThalwegGenerator {
                     state.insert(neighbor, (g_n, current));
                     let h_n = neighbor.distance_to(&sink_in_tree);
                     let f_n = g_n + h_n;
-                    work_queue.push(neighbor, Reverse(f_n as isize));
+                    // push_increase will do the insertion as normal if the neighbor is not already present,
+                    // but will modify the priority if we hand it a "larger" one. Most descriptions of A* use a
+                    // min heap, where decrease_priority works as expected. However, work_queue is implemented
+                    // as a max heap, which we are tricking into becoming a min heap with Reverse(). Because of
+                    // this, increased priorities are actually smaller numbers, as desired.
+                    work_queue.push_increase(neighbor, Reverse(f_n as isize));
                 }
             }
 
@@ -140,7 +145,7 @@ mod test {
             data[0].clone(),
             data[1].clone(),
             data[4].clone(),
-            data[7].clone(),
+            data[5].clone(),
             data[8].clone(),
         ];
         let generator = ThalwegGenerator::from_points(data, 40);
