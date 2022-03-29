@@ -83,7 +83,7 @@ impl fmt::Display for Bathymetry {
         let ew = if longitude < 0.0 { 'W' } else { 'E' };
         write!(
             f,
-            "{}-{}-{:.3}{} {}-{}-{:.3}{} {}",
+            "{:2}-{:2}-{:2.3}{} {:2}-{:2}-{:2.3}{} {:.3}",
             lat_degrees,
             lat_minutes,
             lat_seconds,
@@ -92,7 +92,7 @@ impl fmt::Display for Bathymetry {
             lon_minutes,
             lon_seconds,
             ew,
-            self.depth
+            self.depth()
         )
     }
 }
