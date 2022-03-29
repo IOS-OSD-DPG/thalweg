@@ -1,4 +1,5 @@
 use std::cmp::{Eq, PartialEq};
+use std::fmt;
 use std::hash::{Hash, Hasher};
 
 use geo;
@@ -76,6 +77,21 @@ impl PartialEq for Bathymetry {
 }
 
 impl Eq for Bathymetry {}
+
+impl fmt::Display for Bathymetry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (longitude, latitude) = self.point();
+        let lat_degrees = latitude.abs().trunc() as isize;
+        let lat_minutes = ((latitude.abs() * 60.0).trunc() as isize) % 60;
+        let lat_seconds = (latitude.abs() * 3600.0).rem_euclid(60.0);
+        let ns = if latitude < 0.0 { 'S' } else { 'N' };
+        let lon_degrees = longitude.abs().trunc() as isize;
+        let lon_minutes = ((longitude.abs() * 60.0).trunc() as isize) % 60;
+        let lon_seconds = (longitude.abs() * 3600.0).rem_euclid(60.0);
+        let ew = if longitude < 0.0 { 'W' } else { 'E' };
+        write!(f, "{}-{}-{}{} {}-{}-{}{} {}", lat_degrees, lat_minutes, lat_seconds, ns, lon_degrees, lon_minutes, lon_seconds, ew, self.depth)
+    }
+}
 
 #[cfg(test)]
 mod tests {
