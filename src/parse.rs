@@ -78,7 +78,7 @@ fn in_float(&c: &char) -> bool {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

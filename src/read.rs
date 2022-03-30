@@ -51,7 +51,7 @@ fn read_corner_line(input: &str) -> Option<Point> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]
