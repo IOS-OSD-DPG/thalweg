@@ -5,12 +5,13 @@ use std::io::{self, BufReader, Write};
 use thalweg::format::{self, OutputFormat};
 use thalweg::generator::ThalwegGenerator;
 use thalweg::read;
+use thalweg::section;
 
 use clap::Parser;
 
 /// Generate a thalweg of an inlet
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[clap(version, about, long_about = None)]
 struct Args {
     /// Directory containing NONNA-10 bathymetry data
     #[clap(short, long)]
@@ -20,23 +21,29 @@ struct Args {
     #[clap(short, long)]
     corners: OsString,
 
-    /// File to write resulting path to
-    #[clap(short, long, default_value = "path.txt")]
-    output: OsString,
+    /// File to write resulting path to.
+    /// Defaults to "path.txt" when outputting thalweg,
+    /// and "section.csv" when outputting section information
+    #[clap(short, long)]
+    output: Option<OsString>,
 
-    /// Format of output file
+    /// Format of output file.
+    /// Has no effect when using --section
     #[clap(short, long, default_value_t = OutputFormat::default())]
     format: OutputFormat,
 
     /// Resolution of desired thalweg
     #[clap(short, long, default_value_t = 20)]
     resolution: usize,
+
+    /// Produce a csv file to produce a section plot instead of a thalweg
+    #[clap(short, long)]
+    section: bool,
 }
 
 fn main() -> io::Result<()> {
     let args = Args::parse();
 
-    // read data from dir
     let mut data = vec![];
     for entry in fs::read_dir(args.data)? {
         let file_name = entry?.path();
@@ -46,8 +53,8 @@ fn main() -> io::Result<()> {
         data.extend(read::read_data_lines(&mut reader)?);
     }
     println!("{} data values", data.len());
-    let only_positive = data.into_iter().filter(|bath| bath.depth() > 0.0).collect();
-    // read corners from corners
+    let data = data.into_iter().filter(|bath| bath.depth() > 0.0).collect();
+
     let corners = {
         println!("reading {:?}", args.corners);
         let corners = File::open(args.corners)?;
@@ -55,16 +62,19 @@ fn main() -> io::Result<()> {
         read::read_corner_lines(&mut reader)?
     };
     println!("corners: {:?}", corners);
-    // set up data
-    let generator = ThalwegGenerator::from_points(only_positive, args.resolution);
 
-    // run search
+    let generator = ThalwegGenerator::from_points(data, args.resolution);
     if let Some(path) = generator.thalweg(corners[0], corners[1]) {
-        // got a path
         println!("path contians {} points", path.len());
-        let output = format::convert(args.format, path);
-        let mut file = File::create(args.output)?;
-        file.write(output.as_bytes())?;
+        if args.section {
+            let mut file = File::create(args.output.unwrap_or("section.csv".into()))?;
+            let section_vec = section::section(path);
+            file.write(section::to_csv(section_vec).as_bytes())?;
+        } else {
+            let output = format::convert(args.format, path);
+            let mut file = File::create(args.output.unwrap_or("path.txt".into()))?;
+            file.write(output.as_bytes())?;
+        }
     } else {
         eprintln!("No path found");
     }
