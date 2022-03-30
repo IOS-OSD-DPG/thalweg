@@ -71,10 +71,10 @@ fn main() -> io::Result<()> {
         let section_file = output_path.join("section.csv");
 
         let mut file = File::create(output_file)?;
-        file.write(path_vec.as_bytes())?;
+        file.write_all(path_vec.as_bytes())?;
 
         let mut file = File::create(section_file)?;
-        file.write(section::to_csv(&section_vec).as_bytes())?;
+        file.write_all(section::to_csv(&section_vec).as_bytes())?;
 
     } else {
         eprintln!("No path found");

@@ -12,7 +12,7 @@ impl Section {
     }
 }
 
-pub fn section(path: &Vec<Bathymetry>) -> Vec<Section> {
+pub fn section(path: &[Bathymetry]) -> Vec<Section> {
     let mut distance_from_start = 0;
     let mut out = vec![];
     if let Some(start) = path.get(0) {
@@ -27,7 +27,7 @@ pub fn section(path: &Vec<Bathymetry>) -> Vec<Section> {
     out
 }
 
-pub fn to_csv(section: &Vec<Section>) -> String {
+pub fn to_csv(section: &[Section]) -> String {
     let mut out = String::from("distance,depth\n");
     for elem in section {
         out += format!("{},{}\n", elem.distance as f64 / 1000.0, elem.depth).as_str();

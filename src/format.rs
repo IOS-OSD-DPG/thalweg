@@ -43,14 +43,14 @@ pub fn extension(format: OutputFormat) -> &'static str {
     }
 }
 
-pub fn convert(format: OutputFormat, input: &Vec<Bathymetry>) -> String {
+pub fn convert(format: OutputFormat, input: &[Bathymetry]) -> String {
     match format {
         OutputFormat::Dms => to_dms(input),
         OutputFormat::GeoJson => to_geojson(input),
     }
 }
 
-fn to_dms(input: &Vec<Bathymetry>) -> String {
+fn to_dms(input: &[Bathymetry]) -> String {
     let mut out = "\"Lat (DMS)\" \"Long (DMS)\" \"Depth (m)\"\n".to_string();
     for point in input {
         out += point.to_string().as_str();
@@ -59,7 +59,7 @@ fn to_dms(input: &Vec<Bathymetry>) -> String {
     out
 }
 
-fn to_geojson(input: &Vec<Bathymetry>) -> String {
+fn to_geojson(input: &[Bathymetry]) -> String {
     let mut elems = input.iter().map(|b| {
         let (lon, lat) = b.point();
         format!("[{},{},{}]", lon, lat, -b.depth())

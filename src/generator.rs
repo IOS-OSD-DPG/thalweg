@@ -53,7 +53,7 @@ impl ThalwegGenerator {
                     .unwrap_or(f64::INFINITY);
                 if !state.contains_key(&neighbor) || g_n < old_distance {
                     state.insert(neighbor, (g_n, current));
-                    let h_n = neighbor.distance_to(&sink_in_tree);
+                    let h_n = neighbor.distance_to(sink_in_tree);
                     let f_n = g_n + h_n;
                     // push_increase will do the insertion as normal if the neighbor is not already present,
                     // but will modify the priority if we hand it a "larger" one. Most descriptions of A* use a
