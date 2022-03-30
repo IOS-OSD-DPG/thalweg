@@ -27,17 +27,13 @@ struct Args {
     prefix: OsString,
 
     /// Format of output file.
-    /// Has no effect when using --section
+    /// Has no effect on section info output
     #[clap(short, long, default_value_t = OutputFormat::default())]
     format: OutputFormat,
 
     /// Resolution of desired thalweg
     #[clap(short, long, default_value_t = 20)]
     resolution: usize,
-
-    /// Produce a csv file to produce a section plot instead of a thalweg
-    #[clap(short, long)]
-    section: bool,
 }
 
 fn main() -> io::Result<()> {
