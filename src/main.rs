@@ -1,6 +1,7 @@
 use std::ffi::OsString;
 use std::fs::{self, File};
 use std::io::{self, BufReader, Write};
+use std::path::PathBuf;
 
 use thalweg::format::{self, OutputFormat};
 use thalweg::generator::ThalwegGenerator;
@@ -21,11 +22,9 @@ struct Args {
     #[clap(short, long)]
     corners: OsString,
 
-    /// File to write resulting path to.
-    /// Defaults to "path.txt" when outputting thalweg,
-    /// and "section.csv" when outputting section information
-    #[clap(short, long)]
-    output: Option<OsString>,
+    /// Directory to write resulting path to
+    #[clap(short, long, default_value = ".")]
+    prefix: OsString,
 
     /// Format of output file.
     /// Has no effect when using --section
@@ -66,15 +65,21 @@ fn main() -> io::Result<()> {
     let generator = ThalwegGenerator::from_points(data, args.resolution);
     if let Some(path) = generator.thalweg(corners[0], corners[1]) {
         println!("path contians {} points", path.len());
-        if args.section {
-            let mut file = File::create(args.output.unwrap_or("section.csv".into()))?;
-            let section_vec = section::section(path);
-            file.write(section::to_csv(section_vec).as_bytes())?;
-        } else {
-            let output = format::convert(args.format, path);
-            let mut file = File::create(args.output.unwrap_or("path.txt".into()))?;
-            file.write(output.as_bytes())?;
-        }
+
+        let path_vec = format::convert(args.format, &path);
+        let section_vec = section::section(&path);
+
+        let output_path = PathBuf::from(args.prefix);
+        let output_file = output_path.join("path.txt")
+            .with_extension(format::extension(args.format));
+        let section_file = output_path.join("section.csv");
+
+        let mut file = File::create(output_file)?;
+        file.write(path_vec.as_bytes())?;
+
+        let mut file = File::create(section_file)?;
+        file.write(section::to_csv(&section_vec).as_bytes())?;
+
     } else {
         eprintln!("No path found");
     }

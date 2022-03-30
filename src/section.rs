@@ -12,7 +12,7 @@ impl Section {
     }
 }
 
-pub fn section(path: Vec<Bathymetry>) -> Vec<Section> {
+pub fn section(path: &Vec<Bathymetry>) -> Vec<Section> {
     let mut distance_from_start = 0;
     let mut out = vec![];
     if let Some(start) = path.get(0) {
@@ -27,7 +27,7 @@ pub fn section(path: Vec<Bathymetry>) -> Vec<Section> {
     out
 }
 
-pub fn to_csv(section: Vec<Section>) -> String {
+pub fn to_csv(section: &Vec<Section>) -> String {
     let mut out = String::from("distance,depth\n");
     for elem in section {
         out += format!("{},{}\n", elem.distance as f64 / 1000.0, elem.depth).as_str();
@@ -42,7 +42,7 @@ mod tests {
     #[test]
     fn section_from_single_point() {
         let input = vec![Bathymetry::new(0.0, 0.0, 0.0)];
-        assert_eq!(section(input), vec![Section::new(0, 0.0)]);
+        assert_eq!(section(&input), vec![Section::new(0, 0.0)]);
     }
 
     #[test]
@@ -57,27 +57,27 @@ mod tests {
             Section::new(4355, 96.996),
             Section::new(9436, 107.072),
         ];
-        assert_eq!(section(input), expected);
+        assert_eq!(section(&input), expected);
     }
 
     #[test]
     fn section_to_csv_no_points() {
         let input = vec![];
         let expected = "distance,depth\n";
-        assert_eq!(to_csv(input), expected);
+        assert_eq!(to_csv(&input), expected);
     }
 
     #[test]
     fn section_to_csv_one_point() {
         let input = vec![Section::new(0, 157.692)];
         let expected = "distance,depth\n0,157.692\n";
-        assert_eq!(to_csv(input), expected);
+        assert_eq!(to_csv(&input), expected);
     }
 
     #[test]
     fn section_to_csv_many_points() {
         let input = vec![Section::new(0, 157.692), Section::new(4355, 96.996)];
         let expected = "distance,depth\n0,157.692\n4.355,96.996\n";
-        assert_eq!(to_csv(input), expected);
+        assert_eq!(to_csv(&input), expected);
     }
 }

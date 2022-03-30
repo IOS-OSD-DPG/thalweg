@@ -4,7 +4,7 @@ use std::default;
 use std::fmt;
 use std::str;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum OutputFormat {
     Dms,
     GeoJson,
@@ -15,7 +15,7 @@ impl str::FromStr for OutputFormat {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "dms" => Ok(OutputFormat::Dms),
-            "geojson" | "gjs" => Ok(OutputFormat::GeoJson),
+            "geojson" => Ok(OutputFormat::GeoJson),
             _ => Err("unrecognized output format"),
         }
     }
@@ -36,14 +36,21 @@ impl default::Default for OutputFormat {
     }
 }
 
-pub fn convert(format: OutputFormat, input: Vec<Bathymetry>) -> String {
+pub fn extension(format: OutputFormat) -> &'static str {
+    match format {
+        OutputFormat::Dms => "txt",
+        OutputFormat::GeoJson => "geojson",
+    }
+}
+
+pub fn convert(format: OutputFormat, input: &Vec<Bathymetry>) -> String {
     match format {
         OutputFormat::Dms => to_dms(input),
         OutputFormat::GeoJson => to_geojson(input),
     }
 }
 
-fn to_dms(input: Vec<Bathymetry>) -> String {
+fn to_dms(input: &Vec<Bathymetry>) -> String {
     let mut out = "\"Lat (DMS)\" \"Long (DMS)\" \"Depth (m)\"\n".to_string();
     for point in input {
         out += point.to_string().as_str();
@@ -52,7 +59,7 @@ fn to_dms(input: Vec<Bathymetry>) -> String {
     out
 }
 
-fn to_geojson(input: Vec<Bathymetry>) -> String {
+fn to_geojson(input: &Vec<Bathymetry>) -> String {
     let mut elems = input.iter().map(|b| {
         let (lon, lat) = b.point();
         format!("[{},{},{}]", lon, lat, -b.depth())
@@ -83,7 +90,7 @@ mod tests {
     #[test]
     fn to_dms_no_value() {
         let expected = "\"Lat (DMS)\" \"Long (DMS)\" \"Depth (m)\"\n";
-        assert_eq!(convert(OutputFormat::Dms, vec![]), expected);
+        assert_eq!(convert(OutputFormat::Dms, &vec![]), expected);
     }
 
     #[test]
@@ -93,7 +100,7 @@ mod tests {
             "\"Lat (DMS)\" \"Long (DMS)\" \"Depth (m)\"\n",
             "00-00-0.000N 00-00-0.000E 0.000\n"
         );
-        assert_eq!(convert(OutputFormat::Dms, vec![input]), expected);
+        assert_eq!(convert(OutputFormat::Dms, &vec![input]), expected);
     }
 
     #[test]
@@ -105,7 +112,7 @@ mod tests {
             "00-00-0.000N 00-00-0.000E 0.000\n"
         );
         assert_eq!(
-            convert(OutputFormat::Dms, vec![input.clone(), input.clone()]),
+            convert(OutputFormat::Dms, &vec![input.clone(), input.clone()]),
             expected
         );
     }
@@ -119,7 +126,7 @@ mod tests {
             "}]",
             "}"
         );
-        assert_eq!(convert(OutputFormat::GeoJson, vec![]), expected);
+        assert_eq!(convert(OutputFormat::GeoJson, &vec![]), expected);
     }
 
     #[test]
@@ -142,7 +149,7 @@ mod tests {
             "]",
             "}"
         );
-        assert_eq!(convert(OutputFormat::GeoJson, vec![a]), expected);
+        assert_eq!(convert(OutputFormat::GeoJson, &vec![a]), expected);
     }
 
     #[test]
@@ -167,6 +174,6 @@ mod tests {
             "]",
             "}"
         );
-        assert_eq!(convert(OutputFormat::GeoJson, vec![a, b]), expected);
+        assert_eq!(convert(OutputFormat::GeoJson, &vec![a, b]), expected);
     }
 }
