@@ -2,6 +2,7 @@ use std::ffi::OsString;
 use std::fs::{self, File};
 use std::io::{self, BufReader, Write};
 
+use thalweg::format::{self, OutputFormat};
 use thalweg::generator::ThalwegGenerator;
 use thalweg::read;
 
@@ -22,6 +23,10 @@ struct Args {
     /// File to write resulting path to
     #[clap(short, long, default_value = "path.txt")]
     output: OsString,
+
+    /// Format of output file
+    #[clap(short, long, default_value_t = OutputFormat::default())]
+    format: OutputFormat,
 
     /// Resolution of desired thalweg
     #[clap(short, long, default_value_t = 20)]
@@ -57,11 +62,9 @@ fn main() -> io::Result<()> {
     if let Some(path) = generator.thalweg(corners[0], corners[1]) {
         // got a path
         println!("path contians {} points", path.len());
+        let output = format::convert(args.format, path);
         let mut file = File::create(args.output)?;
-        writeln!(file, "\"Lat (DMS)\" \"Long (DMS)\" \"Depth (m)\"")?;
-        for point in path {
-            writeln!(file, "{}", point)?;
-        }
+        file.write(output.as_bytes())?;
     } else {
         eprintln!("No path found");
     }
