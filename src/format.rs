@@ -55,14 +55,7 @@ fn to_dms(input: Vec<Bathymetry>) -> String {
 fn to_geojson(input: Vec<Bathymetry>) -> String {
     let mut elems = input.iter().map(|b| {
         let (lon, lat) = b.point();
-        let depth = b.depth();
-        String::from("{\"type\":\"Feature\"\"properties\":{\"depth\":")
-            + depth.to_string().as_str()
-            + concat!("}\"geometry\":{\"type\":\"Point\",\"coordinates\":[")
-            + lon.to_string().as_str()
-            + ","
-            + lat.to_string().as_str()
-            + "]}}"
+        format!("[{},{},{}]", lon, lat, -b.depth())
     });
     let mut joined = String::new();
     if let Some(elem) = elems.next() {
@@ -72,10 +65,15 @@ fn to_geojson(input: Vec<Bathymetry>) -> String {
         joined += ",";
         joined += elem.as_str();
     }
-    format!(
-        "{{\"type\":\"FeatureCollection\",\"features\":[{}]}}",
-        joined
-    )
+    String::from("{")
+        + "\"type\":\"FeatureCollection\",\"features\":[{"
+        + "\"type\":\"Feature\",\"properties\":{},\"geometry\":{"
+        + "\"type\":\"LineString\",\"coordinates\":["
+        + joined.as_str()
+        + "]"
+        + "}"
+        + "}]"
+        + "}"
 }
 
 #[cfg(test)]
@@ -114,33 +112,37 @@ mod tests {
 
     #[test]
     fn to_geojson_no_value() {
-        let expected = "{\"type\":\"FeatureCollection\",\"features\":[]}";
+        let expected = concat!(
+            "{\"type\":\"FeatureCollection\",\"features\":[",
+            "{\"type\":\"Feature\",\"properties\":{},\"geometry\":",
+            "{\"type\":\"LineString\",\"coordinates\":[]}",
+            "}]",
+            "}"
+        );
         assert_eq!(convert(OutputFormat::GeoJson, vec![]), expected);
     }
 
     #[test]
     fn to_geojson_one_value() {
-        let input = Bathymetry::new(48.7, -123.7, 100.4);
+        let a = Bathymetry::new(48.7, -123.7, 100.4);
         let expected = concat!(
             "{",
             "\"type\":\"FeatureCollection\",",
             "\"features\":[",
             "{",
-            "\"type\":\"Feature\"",
-            "\"properties\":{",
-            "\"depth\":100.4",
-            "}",
+            "\"type\":\"Feature\",",
+            "\"properties\":{},",
             "\"geometry\":{",
-            "\"type\":\"Point\",",
+            "\"type\":\"LineString\",",
             "\"coordinates\":[",
-            "-123.7,48.7",
+            "[-123.7,48.7,-100.4]",
             "]",
             "}",
             "}",
             "]",
             "}"
         );
-        assert_eq!(convert(OutputFormat::GeoJson, vec![input]), expected);
+        assert_eq!(convert(OutputFormat::GeoJson, vec![a]), expected);
     }
 
     #[test]
@@ -152,26 +154,13 @@ mod tests {
             "\"type\":\"FeatureCollection\",",
             "\"features\":[",
             "{",
-            "\"type\":\"Feature\"",
-            "\"properties\":{",
-            "\"depth\":100.4",
-            "}",
+            "\"type\":\"Feature\",",
+            "\"properties\":{},",
             "\"geometry\":{",
-            "\"type\":\"Point\",",
+            "\"type\":\"LineString\",",
             "\"coordinates\":[",
-            "-123.7,48.7",
-            "]",
-            "}",
-            "},",
-            "{",
-            "\"type\":\"Feature\"",
-            "\"properties\":{",
-            "\"depth\":100.4",
-            "}",
-            "\"geometry\":{",
-            "\"type\":\"Point\",",
-            "\"coordinates\":[",
-            "-123.7,49.7",
+            "[-123.7,48.7,-100.4],",
+            "[-123.7,49.7,-100.4]",
             "]",
             "}",
             "}",
