@@ -1,6 +1,7 @@
+use std::error::Error;
 use std::ffi::OsString;
 use std::fs::{self, File};
-use std::io::{self, BufReader, Write};
+use std::io::{BufReader, Write};
 use std::path::PathBuf;
 
 use thalweg::format::{self, OutputFormat};
@@ -36,7 +37,7 @@ struct Args {
     resolution: usize,
 }
 
-fn main() -> io::Result<()> {
+fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
     let mut data = vec![];

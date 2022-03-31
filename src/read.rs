@@ -2,15 +2,17 @@ use crate::bathymetry::{Bathymetry, Point};
 use crate::parse;
 
 use std::collections::HashMap;
-use std::io::{self, BufRead, BufReader, Read};
+use std::error::Error;
+use std::io::{BufRead, BufReader, Read};
 
-pub fn read_data_lines<T: Read>(input: &mut BufReader<T>) -> io::Result<Vec<Bathymetry>> {
+pub fn read_data_lines<T: Read>(
+    input: &mut BufReader<T>,
+) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
     let mut out = vec![];
     let mut buffer = String::new();
     loop {
         buffer.clear();
-        let bytes_read = input.read_line(&mut buffer)?;
-        if bytes_read == 0 {
+        if input.read_line(&mut buffer)? == 0 {
             break;
         }
         if let Some(value) = read_data_line(buffer.trim()) {
@@ -20,13 +22,12 @@ pub fn read_data_lines<T: Read>(input: &mut BufReader<T>) -> io::Result<Vec<Bath
     Ok(out)
 }
 
-pub fn read_corner_lines<T: Read>(input: &mut BufReader<T>) -> io::Result<Vec<Point>> {
+pub fn read_corner_lines<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Point>, Box<dyn Error>> {
     let mut out = vec![];
     let mut buffer = String::new();
     loop {
         buffer.clear();
-        let bytes_read = input.read_line(&mut buffer)?;
-        if bytes_read == 0 {
+        if input.read_line(&mut buffer)? == 0 {
             break;
         }
         if let Some(value) = read_corner_line(buffer.trim()) {
@@ -36,7 +37,7 @@ pub fn read_corner_lines<T: Read>(input: &mut BufReader<T>) -> io::Result<Vec<Po
     Ok(out)
 }
 
-pub fn read_corner_csv<T: Read>(input: &mut BufReader<T>) -> io::Result<Vec<Point>> {
+pub fn read_corner_csv<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Point>, Box<dyn Error>> {
     let mut out = vec![];
     let mut buffer = String::new();
     // read header
