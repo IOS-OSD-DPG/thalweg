@@ -37,6 +37,7 @@ impl ThalwegGenerator {
         let mut state = HashMap::new();
         let mut work_queue = PriorityQueue::new();
         work_queue.push(source_in_tree, Reverse(0));
+        let mut weights = HashMap::new();
 
         while let Some((current, _)) = work_queue.pop() {
             let distance_to_here = state.get(current).map(|&(d, _)| d).unwrap_or(f64::INFINITY);
@@ -46,7 +47,10 @@ impl ThalwegGenerator {
                 .locate_within_distance(current.point(), distance_squared)
             {
                 // use A* names for to make comparison easier
-                let g_n = distance_to_here + self.weight_of(neighbor);
+                let g_n = distance_to_here
+                    + *weights
+                        .entry(neighbor)
+                        .or_insert_with_key(|key| self.weight_of(key));
                 let old_distance = state
                     .get(&neighbor)
                     .map(|&(d, _)| d)
