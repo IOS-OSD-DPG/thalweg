@@ -52,21 +52,35 @@ fn main() -> io::Result<()> {
 
     let corners = {
         println!("reading {:?}", args.corners);
-        let corners = File::open(args.corners)?;
+        let corner_path = PathBuf::from(args.corners);
+        let corners = File::open(&corner_path)?;
         let mut reader = BufReader::new(corners);
-        read::read_corner_lines(&mut reader)?
+        if let Some(ext) = corner_path.extension() {
+            match ext.to_str() {
+                Some("txt") => read::read_corner_lines(&mut reader)?,
+                Some("csv") => read::read_corner_csv(&mut reader)?,
+                Some(..) => vec![],
+                None => vec![],
+            }
+        } else {
+            read::read_corner_lines(&mut reader)?
+        }
     };
     println!("corners: {:?}", corners);
 
     let generator = ThalwegGenerator::from_points(data, args.resolution);
-    if let Some(path) = generator.thalweg(corners[0], corners[1]) {
+    if let Some(path) = generator.thalweg(
+        *corners.first().expect("no source"),
+        *corners.last().expect("no sink"),
+    ) {
         println!("path contians {} points", path.len());
 
         let path_vec = format::convert(args.format, &path);
         let section_vec = section::section(&path);
 
         let output_path = PathBuf::from(args.prefix);
-        let output_file = output_path.join("path.txt")
+        let output_file = output_path
+            .join("path.txt")
             .with_extension(format::extension(args.format));
         let section_file = output_path.join("section.csv");
 
@@ -75,7 +89,6 @@ fn main() -> io::Result<()> {
 
         let mut file = File::create(section_file)?;
         file.write_all(section::to_csv(&section_vec).as_bytes())?;
-
     } else {
         eprintln!("No path found");
     }

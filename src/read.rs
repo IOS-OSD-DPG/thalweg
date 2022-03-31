@@ -1,6 +1,7 @@
 use crate::bathymetry::{Bathymetry, Point};
 use crate::parse;
 
+use std::collections::HashMap;
 use std::io::{self, BufRead, BufReader, Read};
 
 pub fn read_data_lines<T: Read>(input: &mut BufReader<T>) -> io::Result<Vec<Bathymetry>> {
@@ -31,6 +32,48 @@ pub fn read_corner_lines<T: Read>(input: &mut BufReader<T>) -> io::Result<Vec<Po
         if let Some(value) = read_corner_line(buffer.trim()) {
             out.push(value);
         }
+    }
+    Ok(out)
+}
+
+pub fn read_corner_csv<T: Read>(input: &mut BufReader<T>) -> io::Result<Vec<Point>> {
+    let mut out = vec![];
+    let mut buffer = String::new();
+    // read header
+    if input.read_line(&mut buffer)? == 0 {
+        return Ok(out);
+    }
+    let mut column_map = HashMap::new();
+    for (index, item) in buffer.split(',').enumerate() {
+        column_map.insert(item.trim().trim_matches('"'), index);
+    }
+    let latitude_index = column_map
+        .keys()
+        .filter(|name| name.to_lowercase().starts_with("la"))
+        .next()
+        .and_then(|key| column_map.get(key));
+    let longitude_index = column_map
+        .keys()
+        .filter(|name| name.to_lowercase().starts_with("lo"))
+        .next()
+        .and_then(|key| column_map.get(key));
+    if latitude_index.is_none() || longitude_index.is_none() {
+        return Ok(out);
+    }
+    let &latitude_index = latitude_index.unwrap();
+    let &longitude_index = longitude_index.unwrap();
+    loop {
+        buffer.clear();
+        if input.read_line(&mut buffer)? == 0 {
+            break;
+        }
+        let row: Vec<&str> = buffer.split(',').collect();
+        let latitude = parse::parse_float(row[latitude_index]);
+        let longitude = parse::parse_float(row[longitude_index]);
+        if latitude.is_none() || longitude.is_none() {
+            continue;
+        }
+        out.push((longitude.unwrap(), latitude.unwrap()));
     }
     Ok(out)
 }
@@ -113,6 +156,56 @@ mod tests {
         let mut reader = BufReader::new(source.as_bytes());
         let actual = read_corner_lines(&mut reader);
         let expected = vec![(0.0, 0.0)];
+        assert!(actual.is_ok());
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn reads_corner_csv_longitude_first() {
+        let source = "longitude,latitude\n-123.456,49.58";
+        let mut reader = BufReader::new(source.as_bytes());
+        let actual = read_corner_csv(&mut reader);
+        let expected = vec![(-123.456, 49.58)];
+        assert!(actual.is_ok());
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn reads_corner_csv_latitude_first() {
+        let source = "latitude,longitude\n49.58,-123.456";
+        let mut reader = BufReader::new(source.as_bytes());
+        let actual = read_corner_csv(&mut reader);
+        let expected = vec![(-123.456, 49.58)];
+        assert!(actual.is_ok());
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn reads_corner_csv_short_names() {
+        let source = "lon,lat\n-123.456,49.58";
+        let mut reader = BufReader::new(source.as_bytes());
+        let actual = read_corner_csv(&mut reader);
+        let expected = vec![(-123.456, 49.58)];
+        assert!(actual.is_ok());
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn reads_corner_csv_capitalized_names() {
+        let source = "Longitude,Latitiude\n-123.456,49.58";
+        let mut reader = BufReader::new(source.as_bytes());
+        let actual = read_corner_csv(&mut reader);
+        let expected = vec![(-123.456, 49.58)];
+        assert!(actual.is_ok());
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn reads_corner_csv_despite_formatting() {
+        let source = "\"longitude (float)\", \"latitiude (float)\"\n-123.456,49.58";
+        let mut reader = BufReader::new(source.as_bytes());
+        let actual = read_corner_csv(&mut reader);
+        let expected = vec![(-123.456, 49.58)];
         assert!(actual.is_ok());
         assert_eq!(actual.unwrap(), expected);
     }
