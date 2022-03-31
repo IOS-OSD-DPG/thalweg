@@ -204,4 +204,14 @@ mod tests {
         assert!(actual.is_ok());
         assert_eq!(actual.unwrap(), expected);
     }
+
+    #[test]
+    fn reads_corner_csv_with_other_columns() {
+        let source = "elevation,longitude,depth,latitiude,noise\n0.0,-123.456,0.0,49.58,0.0";
+        let mut reader = BufReader::new(source.as_bytes());
+        let actual = read_corner_csv(&mut reader);
+        let expected = vec![(-123.456, 49.58)];
+        assert!(actual.is_ok());
+        assert_eq!(actual.unwrap(), expected);
+    }
 }
