@@ -48,21 +48,16 @@ pub fn read_corner_csv<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Point>, 
     for (index, item) in buffer.split(',').enumerate() {
         column_map.insert(item.trim().trim_matches('"'), index);
     }
-    let latitude_index = column_map
+    let latitude_index = *column_map
         .keys()
-        .filter(|name| name.to_lowercase().starts_with("la"))
-        .next()
-        .and_then(|key| column_map.get(key));
-    let longitude_index = column_map
+        .find(|name| name.to_lowercase().starts_with("la"))
+        .and_then(|key| column_map.get(key))
+        .ok_or("Latitude not found")?;
+    let longitude_index = *column_map
         .keys()
-        .filter(|name| name.to_lowercase().starts_with("lo"))
-        .next()
-        .and_then(|key| column_map.get(key));
-    if latitude_index.is_none() || longitude_index.is_none() {
-        return Ok(out);
-    }
-    let &latitude_index = latitude_index.unwrap();
-    let &longitude_index = longitude_index.unwrap();
+        .find(|name| name.to_lowercase().starts_with("lo"))
+        .and_then(|key| column_map.get(key))
+        .ok_or("Longitude not found")?;
     loop {
         buffer.clear();
         if input.read_line(&mut buffer)? == 0 {
@@ -71,10 +66,9 @@ pub fn read_corner_csv<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Point>, 
         let row: Vec<&str> = buffer.split(',').collect();
         let latitude = parse::parse_float(row[latitude_index]);
         let longitude = parse::parse_float(row[longitude_index]);
-        if latitude.is_none() || longitude.is_none() {
-            continue;
+        if let Some(point) = longitude.zip(latitude) {
+            out.push(point);
         }
-        out.push((longitude.unwrap(), latitude.unwrap()));
     }
     Ok(out)
 }
