@@ -88,7 +88,8 @@ impl ThalwegGenerator {
     }
 
     fn weight_of(&self, point: &Bathymetry) -> f64 {
-        self.max_depth - point.depth() + 1.0
+        let scale = 100.0;
+        (self.max_depth - point.depth() + scale) / scale
     }
 }
 
