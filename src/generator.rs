@@ -95,6 +95,45 @@ impl ThalwegGenerator {
         let scale = 100.0;
         (self.max_depth - point.depth() + scale) / scale
     }
+
+    pub fn sink(&self, points: &[Bathymetry]) -> Vec<Bathymetry> {
+        let mut out = vec![];
+
+        if let Some(point) = points.first() {
+            out.push(point.clone());
+        }
+
+        for window in points.windows(3) {
+            let prev = &window[0];
+            let current = &window[1];
+            let next = &window[2];
+            let dist_1 = prev.distance_to(current);
+            let dist_2 = current.distance_to(next);
+            let dist = f64::min(dist_1, dist_2);
+            // avoid overlapping with neighbors
+            let resolution = dist / 2.0;
+            // RTree uses distance^2 in locate_within_distance
+            let distance_squared = resolution * resolution;
+
+            let best_neighbor = self
+                .points
+                .locate_within_distance(current.point(), distance_squared)
+                .fold(current, |best, neighbor| {
+                    if best.depth() < neighbor.depth() {
+                        neighbor
+                    } else {
+                        best
+                    }
+                });
+            out.push(best_neighbor.clone());
+        }
+
+        if let Some(point) = points.last() {
+            out.push(point.clone());
+        }
+
+        out
+    }
 }
 
 #[cfg(test)]

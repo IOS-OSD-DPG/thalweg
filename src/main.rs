@@ -32,8 +32,8 @@ struct Args {
     #[clap(short, long, default_value_t = OutputFormat::default())]
     format: OutputFormat,
 
-    /// Resolution of desired thalweg
-    #[clap(short, long, default_value_t = 20)]
+    /// Resolution of desired thalweg in metres
+    #[clap(short, long, default_value_t = 1000)]
     resolution: usize,
 }
 
@@ -75,6 +75,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         *corners.last().expect("no sink"),
     ) {
         println!("path contians {} points", path.len());
+        let path = generator.sink(&path);
 
         let path_vec = format::convert(args.format, &path);
         let section_vec = section::section(&path);
