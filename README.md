@@ -24,6 +24,10 @@ The `--format` option controls the output of the thalweg file.
 `dms` is roughly the same format as the ASCII files from NONNA-10.
 `geojson` will produce a 3D `LineString` object, where the depth is represented as negative elevation.
 
+The provided `section.py` script can consume `section.csv` to produce a section plot.
+
+	python section.py /path/to/section.csv
+
 Procedure
 ---------
 
