@@ -35,6 +35,7 @@ impl ThalwegGenerator {
         let distance_squared = (self.resolution * self.resolution) as f64;
 
         let mut state = HashMap::new();
+        state.insert(source_in_tree, (0.0, source_in_tree));
         let mut work_queue = PriorityQueue::new();
         work_queue.push(source_in_tree, Reverse(0));
         let mut weights = HashMap::new();
@@ -55,7 +56,7 @@ impl ThalwegGenerator {
                     .get(&neighbor)
                     .map(|&(d, _)| d)
                     .unwrap_or(f64::INFINITY);
-                if !state.contains_key(&neighbor) || g_n < old_distance {
+                if g_n < old_distance {
                     state.insert(neighbor, (g_n, current));
                     let h_n = neighbor.distance_to(sink_in_tree);
                     let f_n = g_n + h_n;
@@ -188,7 +189,7 @@ mod tests {
         let expected = vec![
             data[0].clone(),
             data[1].clone(),
-            data[4].clone(),
+            data[2].clone(),
             data[5].clone(),
             data[8].clone(),
         ];
