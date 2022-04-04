@@ -21,7 +21,7 @@ pub fn parse_dms_longitude(longitude: &str) -> Option<f64> {
 }
 
 pub fn parse_float(input: &str) -> Option<f64> {
-    input.parse::<f64>().ok()
+    input.trim().parse::<f64>().ok()
 }
 
 fn trim_last(input: &str) -> &str {

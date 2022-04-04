@@ -7,7 +7,6 @@ use std::path::PathBuf;
 use thalweg::format::{self, OutputFormat};
 use thalweg::generator::ThalwegGenerator;
 use thalweg::read;
-use thalweg::section;
 
 use clap::Parser;
 
@@ -16,11 +15,9 @@ use clap::Parser;
 #[clap(version, about, long_about = None)]
 struct Args {
     /// Directory containing NONNA-10 bathymetry data
-    #[clap(short, long)]
     data: OsString,
 
     /// File containing the beginning and end of the inlet
-    #[clap(short, long)]
     corners: OsString,
 
     /// Directory to write resulting path to
@@ -46,7 +43,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("reading {:?}", file_name);
         let file = File::open(file_name)?;
         let mut reader = BufReader::new(file);
-        data.extend(read::read_data_lines(&mut reader)?);
+        data.extend(read::bathymetry::from_nonna(&mut reader)?);
     }
     println!("{} data values", data.len());
     let data = data.into_iter().filter(|bath| bath.depth() > 0.0).collect();
@@ -58,13 +55,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut reader = BufReader::new(corners);
         if let Some(ext) = corner_path.extension() {
             match ext.to_str() {
-                Some("txt") => read::read_corner_lines(&mut reader)?,
-                Some("csv") => read::read_corner_csv(&mut reader)?,
+                Some("txt") => read::point::from_nonna(&mut reader)?,
+                Some("csv") => read::point::from_csv(&mut reader)?,
                 Some(..) => vec![],
                 None => vec![],
             }
         } else {
-            read::read_corner_lines(&mut reader)?
+            read::point::from_nonna(&mut reader)?
         }
     };
     println!("corners: {:?}", corners);
@@ -86,19 +83,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         };
 
         let path_vec = format::convert(args.format, &path);
-        let section_vec = section::section(&path);
 
         let output_path = PathBuf::from(args.prefix);
         let output_file = output_path
             .join("path.txt")
             .with_extension(format::extension(args.format));
-        let section_file = output_path.join("section.csv");
 
         let mut file = File::create(output_file)?;
         file.write_all(path_vec.as_bytes())?;
-
-        let mut file = File::create(section_file)?;
-        file.write_all(section::to_csv(&section_vec).as_bytes())?;
     } else {
         eprintln!("No path found");
     }
