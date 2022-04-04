@@ -21,16 +21,7 @@ pub fn parse_dms_longitude(longitude: &str) -> Option<f64> {
 }
 
 pub fn parse_float(input: &str) -> Option<f64> {
-    let potential = input
-        .chars()
-        .skip_while(|c| !in_float(c))
-        .take_while(in_float)
-        .collect::<String>();
-    if let Ok(value) = potential.parse::<f64>() {
-        Some(value)
-    } else {
-        None
-    }
+    input.parse::<f64>().ok()
 }
 
 fn trim_last(input: &str) -> &str {
@@ -71,10 +62,6 @@ fn is_east(c: char) -> bool {
 
 fn is_west(c: char) -> bool {
     c == 'w' || c == 'W'
-}
-
-fn in_float(&c: &char) -> bool {
-    c == '-' || c == '.' || c.is_digit(10) || c == 'e' || c == 'E'
 }
 
 #[cfg(test)]
