@@ -37,8 +37,6 @@ fn nonna_parse_unparse_equivalent() {
         Bathymetry::new(49.58, -123.456, 100.0),
     ];
     let string = format::convert(OutputFormat::Dms, &input);
-    eprintln!("{}", string);
-    assert!(string.len() > 0);
     let mut reader = BufReader::new(string.as_bytes());
     let actual = read::thalweg::from_nonna(&mut reader);
     assert!(actual.is_ok());

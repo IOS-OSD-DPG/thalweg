@@ -106,7 +106,7 @@ mod tests {
     #[test]
     fn to_dms_no_value() {
         let expected = "\"Lat (DMS)\" \"Long (DMS)\" \"Depth (m)\"\n";
-        assert_eq!(convert(OutputFormat::Dms, &vec![]), expected);
+        assert_eq!(convert(OutputFormat::Dms, &[]), expected);
     }
 
     #[test]
@@ -116,7 +116,7 @@ mod tests {
             "\"Lat (DMS)\" \"Long (DMS)\" \"Depth (m)\"\n",
             "00-00-0.000N 00-00-0.000E 0.000\n"
         );
-        assert_eq!(convert(OutputFormat::Dms, &vec![input]), expected);
+        assert_eq!(convert(OutputFormat::Dms, &[input]), expected);
     }
 
     #[test]
@@ -128,7 +128,7 @@ mod tests {
             "00-00-0.000N 00-00-0.000E 0.000\n"
         );
         assert_eq!(
-            convert(OutputFormat::Dms, &vec![input.clone(), input.clone()]),
+            convert(OutputFormat::Dms, &[input.clone(), input]),
             expected
         );
     }
@@ -142,7 +142,7 @@ mod tests {
             "}]",
             "}"
         );
-        assert_eq!(convert(OutputFormat::GeoJson, &vec![]), expected);
+        assert_eq!(convert(OutputFormat::GeoJson, &[]), expected);
     }
 
     #[test]
@@ -165,7 +165,7 @@ mod tests {
             "]",
             "}"
         );
-        assert_eq!(convert(OutputFormat::GeoJson, &vec![a]), expected);
+        assert_eq!(convert(OutputFormat::GeoJson, &[a]), expected);
     }
 
     #[test]
@@ -190,17 +190,14 @@ mod tests {
             "]",
             "}"
         );
-        assert_eq!(convert(OutputFormat::GeoJson, &vec![a, b]), expected);
+        assert_eq!(convert(OutputFormat::GeoJson, &[a, b]), expected);
     }
 
     #[test]
     fn to_csv_one_value() {
         let a = Bathymetry::new(48.7, -123.7, 100.4);
-        let expected = concat!(
-            "longitude,latitude,depth\n",
-            "-123.7,48.7,100.4\n"
-        );
-        assert_eq!(convert(OutputFormat::Csv, &vec![a]), expected);
+        let expected = "longitude,latitude,depth\n-123.7,48.7,100.4\n";
+        assert_eq!(convert(OutputFormat::Csv, &[a]), expected);
     }
 
     #[test]
@@ -212,6 +209,6 @@ mod tests {
             "-123.7,48.7,100.4\n",
             "-123.7,49.7,100.4\n"
         );
-        assert_eq!(convert(OutputFormat::Csv, &vec![a, b]), expected);
+        assert_eq!(convert(OutputFormat::Csv, &[a, b]), expected);
     }
 }

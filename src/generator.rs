@@ -163,7 +163,7 @@ mod tests {
             Bathymetry::new(0.0, 0.0, 0.0),
             Bathymetry::new(0.00001, 0.00001, 0.0),
         ];
-        let generator = ThalwegGenerator::from_points(data.clone(), 400);
+        let generator = ThalwegGenerator::from_points(data, 400);
         let path = generator.thalweg(
             expected.first().unwrap().point(),
             expected.last().unwrap().point(),
