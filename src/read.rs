@@ -13,13 +13,12 @@ pub fn read_data_lines<T: Read>(
     loop {
         buffer.clear();
         if input.read_line(&mut buffer)? == 0 {
-            break;
+            break Ok(out);
         }
         if let Some(value) = read_data_line(buffer.trim()) {
             out.push(value);
         }
     }
-    Ok(out)
 }
 
 pub fn read_corner_lines<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Point>, Box<dyn Error>> {
@@ -28,13 +27,12 @@ pub fn read_corner_lines<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Point>
     loop {
         buffer.clear();
         if input.read_line(&mut buffer)? == 0 {
-            break;
+            break Ok(out);
         }
         if let Some(value) = read_corner_line(buffer.trim()) {
             out.push(value);
         }
     }
-    Ok(out)
 }
 
 pub fn read_corner_csv<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Point>, Box<dyn Error>> {
@@ -61,7 +59,7 @@ pub fn read_corner_csv<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Point>, 
     loop {
         buffer.clear();
         if input.read_line(&mut buffer)? == 0 {
-            break;
+            break Ok(out);
         }
         let row: Vec<&str> = buffer.split(',').collect();
         let latitude = parse::parse_float(row[latitude_index]);
@@ -70,7 +68,6 @@ pub fn read_corner_csv<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Point>, 
             out.push(point);
         }
     }
-    Ok(out)
 }
 
 fn read_data_line(input: &str) -> Option<Bathymetry> {
