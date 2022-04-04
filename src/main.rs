@@ -75,7 +75,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         *corners.last().expect("no sink"),
     ) {
         println!("path contians {} points", path.len());
-        let path = generator.sink(&path);
+        let mut current_path = path;
+        let path = loop {
+            // find fixed-point thalweg - mostly in an attempt to ensure the thalweg does not pass over land
+            let new_path = generator.sink(&current_path);
+            if new_path == current_path {
+                break current_path;
+            }
+            current_path = new_path;
+        };
 
         let path_vec = format::convert(args.format, &path);
         let section_vec = section::section(&path);
