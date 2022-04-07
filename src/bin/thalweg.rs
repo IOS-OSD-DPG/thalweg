@@ -88,6 +88,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         current_path = generator.shrink(&new_path);
     };
 
+    println!("populating sparse sections of path");
+    let mut current_path = path;
+    let path = loop {
+        let new_path = generator.with_midpoints(&current_path);
+        if new_path == current_path {
+            break current_path;
+        }
+        current_path = new_path;
+    };
+
     println!("path now contians {} points", path.len());
     let path_vec = format::convert(args.format, &path);
 

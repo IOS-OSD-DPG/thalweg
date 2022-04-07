@@ -3,6 +3,9 @@ use crate::bathymetry::{Bathymetry, Point};
 use std::cmp::Reverse;
 use std::collections::HashMap;
 
+use geo::algorithm::line_interpolate_point::LineInterpolatePoint;
+use geo::Line;
+
 use priority_queue::PriorityQueue;
 
 use rstar::RTree;
@@ -138,6 +141,29 @@ impl ThalwegGenerator {
             out.push(current.clone());
         }
 
+        out
+    }
+
+    pub fn with_midpoints(&self, points: &[Bathymetry]) -> Vec<Bathymetry> {
+        let mut out = vec![];
+
+        for window in points.windows(2) {
+            let a = &window[0];
+            let b = &window[1];
+
+            out.push(a.clone());
+            let line = Line::new(a.point(), b.point());
+            if let Some(midpoint) = line
+                .line_interpolate_point(0.5)
+                .and_then(|m| self.points.nearest_neighbor(&m.x_y()))
+            {
+                out.push(midpoint.clone());
+            }
+            out.push(b.clone());
+        }
+
+        // added numerous points twice - get rid of them
+        out.dedup();
         out
     }
 }
@@ -287,5 +313,130 @@ mod tests {
         let generator = ThalwegGenerator::from_points(vec![], 100);
         let new_path = generator.shrink(&input);
         assert!(new_path.len() < input.len());
+    }
+
+    #[test]
+    fn with_midpoint_produces_new_values_between_existing_ones() {
+        let km = 1000.0;
+        let one_second = 1.0 / 3600.0;
+        let data = vec![
+            Bathymetry::new(-2.0 * one_second, -2.0 * one_second, 10.0 * km),
+            Bathymetry::new(-2.0 * one_second, -1.0 * one_second, 200.0 * km),
+            Bathymetry::new(-2.0 * one_second, 0.0 * one_second, 100.0 * km),
+            Bathymetry::new(-2.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(-2.0 * one_second, 2.0 * one_second, 100.0 * km),
+            Bathymetry::new(-1.0 * one_second, -2.0 * one_second, 140.0 * km),
+            Bathymetry::new(-1.0 * one_second, -1.0 * one_second, 140.0 * km),
+            Bathymetry::new(-1.0 * one_second, 0.0 * one_second, 150.0 * km),
+            Bathymetry::new(-1.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(-1.0 * one_second, 2.0 * one_second, 100.0 * km),
+            Bathymetry::new(0.0 * one_second, -2.0 * one_second, 100.0 * km),
+            Bathymetry::new(0.0 * one_second, -1.0 * one_second, 100.0 * km),
+            Bathymetry::new(0.0 * one_second, 0.0 * one_second, 9.0 * km),
+            Bathymetry::new(0.0 * one_second, 1.0 * one_second, 140.0 * km),
+            Bathymetry::new(0.0 * one_second, 2.0 * one_second, 100.0 * km),
+            Bathymetry::new(1.0 * one_second, -2.0 * one_second, 5.0 * km),
+            Bathymetry::new(1.0 * one_second, -1.0 * one_second, 5.0 * km),
+            Bathymetry::new(1.0 * one_second, 0.0 * one_second, 6.0 * km),
+            Bathymetry::new(1.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(1.0 * one_second, 2.0 * one_second, 5.0 * km),
+            Bathymetry::new(2.0 * one_second, -2.0 * one_second, 5.0 * km),
+            Bathymetry::new(2.0 * one_second, -1.0 * one_second, 5.0 * km),
+            Bathymetry::new(2.0 * one_second, 0.0 * one_second, 6.0 * km),
+            Bathymetry::new(2.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(2.0 * one_second, 2.0 * one_second, 5.0 * km),
+        ];
+        let input = vec![data[0].clone(), data[24].clone()];
+        let expected = vec![data[0].clone(), data[12].clone(), data[24].clone()];
+        let generator = ThalwegGenerator::from_points(data, 50);
+        let path = generator.with_midpoints(&input);
+        assert_eq!(path, expected);
+    }
+
+    #[test]
+    fn with_midpoint_applied_twice_subdivides_further() {
+        let km = 1000.0;
+        let one_second = 1.0 / 3600.0;
+        let data = vec![
+            Bathymetry::new(-2.0 * one_second, -2.0 * one_second, 10.0 * km),
+            Bathymetry::new(-2.0 * one_second, -1.0 * one_second, 200.0 * km),
+            Bathymetry::new(-2.0 * one_second, 0.0 * one_second, 100.0 * km),
+            Bathymetry::new(-2.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(-2.0 * one_second, 2.0 * one_second, 100.0 * km),
+            Bathymetry::new(-1.0 * one_second, -2.0 * one_second, 140.0 * km),
+            Bathymetry::new(-1.0 * one_second, -1.0 * one_second, 140.0 * km),
+            Bathymetry::new(-1.0 * one_second, 0.0 * one_second, 150.0 * km),
+            Bathymetry::new(-1.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(-1.0 * one_second, 2.0 * one_second, 100.0 * km),
+            Bathymetry::new(0.0 * one_second, -2.0 * one_second, 100.0 * km),
+            Bathymetry::new(0.0 * one_second, -1.0 * one_second, 100.0 * km),
+            Bathymetry::new(0.0 * one_second, 0.0 * one_second, 9.0 * km),
+            Bathymetry::new(0.0 * one_second, 1.0 * one_second, 140.0 * km),
+            Bathymetry::new(0.0 * one_second, 2.0 * one_second, 100.0 * km),
+            Bathymetry::new(1.0 * one_second, -2.0 * one_second, 5.0 * km),
+            Bathymetry::new(1.0 * one_second, -1.0 * one_second, 5.0 * km),
+            Bathymetry::new(1.0 * one_second, 0.0 * one_second, 6.0 * km),
+            Bathymetry::new(1.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(1.0 * one_second, 2.0 * one_second, 5.0 * km),
+            Bathymetry::new(2.0 * one_second, -2.0 * one_second, 5.0 * km),
+            Bathymetry::new(2.0 * one_second, -1.0 * one_second, 5.0 * km),
+            Bathymetry::new(2.0 * one_second, 0.0 * one_second, 6.0 * km),
+            Bathymetry::new(2.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(2.0 * one_second, 2.0 * one_second, 5.0 * km),
+        ];
+        let input = vec![data[0].clone(), data[24].clone()];
+        let expected = vec![
+            data[0].clone(),
+            data[6].clone(),
+            data[12].clone(),
+            data[18].clone(),
+            data[24].clone(),
+        ];
+        let generator = ThalwegGenerator::from_points(data, 50);
+        let path = generator.with_midpoints(&generator.with_midpoints(&input));
+        assert_eq!(path, expected);
+    }
+
+    #[test]
+    fn with_midpoint_does_not_invent_data() {
+        let km = 1000.0;
+        let one_second = 1.0 / 3600.0;
+        let data = vec![
+            Bathymetry::new(-2.0 * one_second, -2.0 * one_second, 10.0 * km),
+            Bathymetry::new(-2.0 * one_second, -1.0 * one_second, 200.0 * km),
+            Bathymetry::new(-2.0 * one_second, 0.0 * one_second, 100.0 * km),
+            Bathymetry::new(-2.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(-2.0 * one_second, 2.0 * one_second, 100.0 * km),
+            Bathymetry::new(-1.0 * one_second, -2.0 * one_second, 140.0 * km),
+            Bathymetry::new(-1.0 * one_second, -1.0 * one_second, 140.0 * km),
+            Bathymetry::new(-1.0 * one_second, 0.0 * one_second, 150.0 * km),
+            Bathymetry::new(-1.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(-1.0 * one_second, 2.0 * one_second, 100.0 * km),
+            Bathymetry::new(0.0 * one_second, -2.0 * one_second, 100.0 * km),
+            Bathymetry::new(0.0 * one_second, -1.0 * one_second, 100.0 * km),
+            Bathymetry::new(0.0 * one_second, 0.0 * one_second, 9.0 * km),
+            Bathymetry::new(0.0 * one_second, 1.0 * one_second, 140.0 * km),
+            Bathymetry::new(0.0 * one_second, 2.0 * one_second, 100.0 * km),
+            Bathymetry::new(1.0 * one_second, -2.0 * one_second, 5.0 * km),
+            Bathymetry::new(1.0 * one_second, -1.0 * one_second, 5.0 * km),
+            Bathymetry::new(1.0 * one_second, 0.0 * one_second, 6.0 * km),
+            Bathymetry::new(1.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(1.0 * one_second, 2.0 * one_second, 5.0 * km),
+            Bathymetry::new(2.0 * one_second, -2.0 * one_second, 5.0 * km),
+            Bathymetry::new(2.0 * one_second, -1.0 * one_second, 5.0 * km),
+            Bathymetry::new(2.0 * one_second, 0.0 * one_second, 6.0 * km),
+            Bathymetry::new(2.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(2.0 * one_second, 2.0 * one_second, 5.0 * km),
+        ];
+        let input = vec![
+            data[0].clone(),
+            data[6].clone(),
+            data[12].clone(),
+            data[18].clone(),
+            data[24].clone(),
+        ];
+        let generator = ThalwegGenerator::from_points(data, 50);
+        let path = generator.with_midpoints(&generator.with_midpoints(&input));
+        assert_eq!(path, input);
     }
 }
