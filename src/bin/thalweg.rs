@@ -40,7 +40,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut data = vec![];
     for entry in fs::read_dir(args.data)? {
         let file_name = entry?.path();
-        println!("reading {:?}", file_name);
         let file = File::open(file_name)?;
         let mut reader = BufReader::new(file);
         data.extend(read::bathymetry::from_nonna(&mut reader)?);
@@ -49,7 +48,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let data = data.into_iter().filter(|bath| bath.depth() > 0.0).collect();
 
     let corners = {
-        println!("reading {:?}", args.corners);
         let corner_path = PathBuf::from(args.corners);
         let corners = File::open(&corner_path)?;
         let mut reader = BufReader::new(corners);
@@ -64,36 +62,41 @@ fn main() -> Result<(), Box<dyn Error>> {
             read::point::from_nonna(&mut reader)?
         }
     };
-    println!("corners: {:?}", corners);
 
+    let mut full_path = vec![];
     let generator = ThalwegGenerator::from_points(data, args.resolution);
-    if let Some(path) = generator.thalweg(
-        *corners.first().expect("no source"),
-        *corners.last().expect("no sink"),
-    ) {
-        println!("path contians {} points", path.len());
-        let mut current_path = path;
-        let path = loop {
-            // find fixed-point thalweg - mostly in an attempt to ensure the thalweg does not pass over land
-            let new_path = generator.sink(&current_path);
-            if new_path == current_path {
-                break current_path;
-            }
-            current_path = new_path;
-        };
-
-        let path_vec = format::convert(args.format, &path);
-
-        let output_path = PathBuf::from(args.prefix);
-        let output_file = output_path
-            .join("path.txt")
-            .with_extension(format::extension(args.format));
-
-        let mut file = File::create(output_file)?;
-        file.write_all(path_vec.as_bytes())?;
-    } else {
-        eprintln!("No path found");
+    for ends in corners.windows(2) {
+        let source = *ends.first().expect("no source");
+        let sink = *ends.last().expect("no sink");
+        if let Some(mut path) = generator.thalweg(source, sink) {
+            full_path.append(&mut path);
+        } else {
+            return Err(Box::<dyn Error>::from(format!(
+                "No path found between {:?} and {:?}",
+                source, sink
+            )));
+        }
     }
+    println!("path contians {} points", full_path.len());
+    let mut current_path = full_path;
+    let path = loop {
+        // find fixed-point thalweg - mostly in an attempt to ensure the thalweg does not pass over land
+        let new_path = generator.sink(&current_path);
+        if new_path == current_path {
+            break current_path;
+        }
+        current_path = new_path;
+    };
+
+    let path_vec = format::convert(args.format, &path);
+
+    let output_path = PathBuf::from(args.prefix);
+    let output_file = output_path
+        .join("path.txt")
+        .with_extension(format::extension(args.format));
+
+    let mut file = File::create(output_file)?;
+    file.write_all(path_vec.as_bytes())?;
 
     Ok(())
 }
