@@ -9,21 +9,14 @@ use rstar::RTree;
 
 pub struct ThalwegGenerator {
     points: RTree<Bathymetry>,
-    max_depth: f64,
-    resolution: usize,
+    resolution: f64,
 }
 
 impl ThalwegGenerator {
     pub fn from_points(points: Vec<Bathymetry>, resolution: usize) -> Self {
-        let max_depth = points
-            .iter()
-            .map(Bathymetry::depth)
-            .reduce(f64::max)
-            .expect("no points given to ThalwegGenerator");
         Self {
             points: RTree::bulk_load(points),
-            max_depth,
-            resolution,
+            resolution: resolution as f64,
         }
     }
 
@@ -32,13 +25,12 @@ impl ThalwegGenerator {
         let sink_in_tree = self.points.nearest_neighbor(&sink)?;
 
         // RTree uses distance^2 in locate_within_distance
-        let distance_squared = (self.resolution * self.resolution) as f64;
+        let distance_squared = self.resolution * self.resolution;
 
         let mut state = HashMap::new();
         state.insert(source_in_tree, (0.0, source_in_tree));
         let mut work_queue = PriorityQueue::new();
         work_queue.push(source_in_tree, Reverse(0));
-        let mut weights = HashMap::new();
 
         while let Some((current, _)) = work_queue.pop() {
             let distance_to_here = state.get(current).map(|&(d, _)| d).unwrap_or(f64::INFINITY);
@@ -47,11 +39,8 @@ impl ThalwegGenerator {
                 .points
                 .locate_within_distance(current.point(), distance_squared)
             {
-                // use A* names for to make comparison easier
-                let g_n = distance_to_here
-                    + *weights
-                        .entry(neighbor)
-                        .or_insert_with_key(|key| self.weight_of(key));
+                // use A* names to make comparison easier
+                let g_n = distance_to_here + 1.0;
                 let old_distance = state
                     .get(&neighbor)
                     .map(|&(d, _)| d)
@@ -90,11 +79,6 @@ impl ThalwegGenerator {
 
         path.reverse();
         Some(path)
-    }
-
-    fn weight_of(&self, point: &Bathymetry) -> f64 {
-        let scale = 100.0;
-        (self.max_depth - point.depth() + scale) / scale
     }
 
     pub fn sink(&self, points: &[Bathymetry]) -> Vec<Bathymetry> {
