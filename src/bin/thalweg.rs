@@ -85,9 +85,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         if new_path == current_path {
             break current_path;
         }
-        current_path = new_path;
+        current_path = generator.shrink(&new_path);
     };
 
+    println!("path now contians {} points", path.len());
     let path_vec = format::convert(args.format, &path);
 
     let output_path = PathBuf::from(args.prefix);

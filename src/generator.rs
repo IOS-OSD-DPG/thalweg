@@ -119,6 +119,27 @@ impl ThalwegGenerator {
 
         out
     }
+
+    pub fn shrink(&self, points: &[Bathymetry]) -> Vec<Bathymetry> {
+        let mut out = vec![];
+
+        let factor = self.resolution / 2.0;
+
+        if let Some(point) = points.first() {
+            out.push(point.clone());
+        }
+
+        for window in points.windows(2) {
+            let prev = &window[0];
+            let current = &window[1];
+            if prev.distance_to(current) < factor && prev.depth() > current.depth() {
+                continue;
+            }
+            out.push(current.clone());
+        }
+
+        out
+    }
 }
 
 #[cfg(test)]
