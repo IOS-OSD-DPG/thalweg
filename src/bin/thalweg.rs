@@ -32,6 +32,10 @@ struct Args {
     /// Resolution of desired thalweg in metres
     #[clap(short, long, default_value_t = 1000)]
     resolution: usize,
+
+    /// Skip adding resolution to final thalweg
+    #[clap(short, long)]
+    sparse: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -85,11 +89,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         if new_path == current_path {
             break current_path;
         }
+        // combine points that are too close and may produce strange paths on further sink steps
         current_path = generator.shrink(&new_path);
     };
 
-    println!("populating sparse sections of path");
-    let path = generator.populate(&path);
+    let path = if !args.sparse {
+        println!("Increasing density of path");
+        generator.populate(&path)
+    } else {
+        path
+    };
 
     println!("path now contians {} points", path.len());
     let path_vec = format::convert(args.format, &path);
