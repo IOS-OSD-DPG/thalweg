@@ -57,19 +57,34 @@ pub fn from_csv<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Bathymetry>, Bo
 
 /// Read thalweg data from GeoJSON
 pub fn from_geojson<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
-    let mut out = vec![];
     let mut buffer = String::new();
     input.read_to_string(&mut buffer)?;
     let geojson = json::parse(&buffer)?;
-    if geojson["type"] != "FeatureCollection"
-        || geojson["features"][0]["type"] != "Feature"
-        || geojson["features"][0]["geometry"]["type"] != "LineString"
-    {
-        return Err(Box::<dyn Error>::from("Malformed GeoJSON".to_string()));
+    if geojson["type"] == "FeatureCollection" {
+        from_feature_collection(&geojson)
+    } else if geojson["type"] == "Feature" {
+        from_feature(&geojson)
+    } else {
+        from_line_string(&geojson)
     }
-    let coordinates = &geojson["features"][0]["geometry"]["coordinates"];
+}
+
+fn from_feature_collection(input: &json::JsonValue) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
+    from_feature(&input["features"][0])
+}
+
+fn from_feature(input: &json::JsonValue) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
+    from_line_string(&input["geometry"])
+}
+
+fn from_line_string(input: &json::JsonValue) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
+    let mut out = vec![];
+    if input["type"] != "LineString" {
+        return Err(Box::<dyn Error>::from("Thalweg can only be constructed from a LineString object"));
+    }
+    let coordinates = &input["coordinates"];
     if coordinates.is_null() {
-        return Err(Box::<dyn Error>::from("No coordinates found".to_string()));
+        return Err(Box::<dyn Error>::from("No coordinates found"));
     }
     for member in coordinates.members() {
         let longitude = member[0].as_f64().ok_or("Missing longitude")?;
@@ -118,12 +133,40 @@ mod tests {
     }
 
     #[test]
-    fn reads_thalweg_from_geoson() {
+    fn reads_thalweg_from_geoson_feature_collection() {
         let source = r#"{"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[-122.882765,49.46419,-9.144]]}}]}"#;
         let mut reader = BufReader::new(source.as_bytes());
         let actual = from_geojson(&mut reader);
         let expected = vec![Bathymetry::new(49.46419, -122.882765, 9.144)];
         assert!(actual.is_ok());
         assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn reads_thalweg_from_geoson_feature() {
+        let source = r#"{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[[-122.882765,49.46419,-9.144]]}}"#;
+        let mut reader = BufReader::new(source.as_bytes());
+        let actual = from_geojson(&mut reader);
+        let expected = vec![Bathymetry::new(49.46419, -122.882765, 9.144)];
+        assert!(actual.is_ok());
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn reads_thalweg_from_geoson_line_string() {
+        let source = r#"{"type":"LineString","coordinates":[[-122.882765,49.46419,-9.144]]}"#;
+        let mut reader = BufReader::new(source.as_bytes());
+        let actual = from_geojson(&mut reader);
+        let expected = vec![Bathymetry::new(49.46419, -122.882765, 9.144)];
+        assert!(actual.is_ok());
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn rejects_thalweg_from_geojson_wrong_type() {
+        let source = r#"{"type":"Point","coordinates":[-122.882765,49.46419,-9.144]}"#;
+        let mut reader = BufReader::new(source.as_bytes());
+        let actual = from_geojson(&mut reader);
+        assert!(actual.is_err());
     }
 }
