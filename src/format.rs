@@ -89,13 +89,9 @@ fn to_geojson(input: &[Bathymetry]) -> String {
         joined += elem.as_str();
     }
     String::from("{")
-        + "\"type\":\"FeatureCollection\",\"features\":[{"
-        + "\"type\":\"Feature\",\"properties\":{},\"geometry\":{"
         + "\"type\":\"LineString\",\"coordinates\":["
         + joined.as_str()
         + "]"
-        + "}"
-        + "}]"
         + "}"
 }
 
@@ -135,13 +131,7 @@ mod tests {
 
     #[test]
     fn to_geojson_no_value() {
-        let expected = concat!(
-            "{\"type\":\"FeatureCollection\",\"features\":[",
-            "{\"type\":\"Feature\",\"properties\":{},\"geometry\":",
-            "{\"type\":\"LineString\",\"coordinates\":[]}",
-            "}]",
-            "}"
-        );
+        let expected = "{\"type\":\"LineString\",\"coordinates\":[]}";
         assert_eq!(convert(OutputFormat::GeoJson, &[]), expected);
     }
 
@@ -150,18 +140,9 @@ mod tests {
         let a = Bathymetry::new(48.7, -123.7, 100.4);
         let expected = concat!(
             "{",
-            "\"type\":\"FeatureCollection\",",
-            "\"features\":[",
-            "{",
-            "\"type\":\"Feature\",",
-            "\"properties\":{},",
-            "\"geometry\":{",
             "\"type\":\"LineString\",",
             "\"coordinates\":[",
             "[-123.7,48.7,-100.4]",
-            "]",
-            "}",
-            "}",
             "]",
             "}"
         );
@@ -174,19 +155,10 @@ mod tests {
         let b = Bathymetry::new(49.7, -123.7, 100.4);
         let expected = concat!(
             "{",
-            "\"type\":\"FeatureCollection\",",
-            "\"features\":[",
-            "{",
-            "\"type\":\"Feature\",",
-            "\"properties\":{},",
-            "\"geometry\":{",
             "\"type\":\"LineString\",",
             "\"coordinates\":[",
             "[-123.7,48.7,-100.4],",
             "[-123.7,49.7,-100.4]",
-            "]",
-            "}",
-            "}",
             "]",
             "}"
         );
