@@ -3,6 +3,7 @@ use crate::bathymetry::{Bathymetry, Point};
 use std::cmp::Reverse;
 use std::collections::HashMap;
 
+use geo::algorithm::geodesic_length::GeodesicLength;
 use geo::algorithm::line_interpolate_point::LineInterpolatePoint;
 use geo::LineString;
 
@@ -163,8 +164,12 @@ impl ThalwegGenerator {
     pub fn populate(&self, points: &[Bathymetry]) -> Vec<Bathymetry> {
         let mut out = vec![];
         let path: LineString<f64> = points.iter().map(|p| p.point()).collect();
-        for section in 0..=(self.resolution as usize) {
-            let fraction = (section as f64) / (self.resolution as f64);
+        let length = path.geodesic_length();
+        let resolution = (self.resolution as f64) * 0.00001;
+        let num_chunks = (length / resolution).ceil() as usize;
+        for chunk in 0..=num_chunks {
+            let distance_from_start = chunk * self.resolution;
+            let fraction = (distance_from_start as f64) / length;
             if let Some(point) = path
                 .line_interpolate_point(fraction)
                 .and_then(|p| self.points.nearest_neighbor(&p.x_y()))
