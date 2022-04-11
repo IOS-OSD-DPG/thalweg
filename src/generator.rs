@@ -12,14 +12,21 @@ use rstar::RTree;
 
 pub struct ThalwegGenerator {
     points: RTree<Bathymetry>,
-    resolution: f64,
+    max_depth: f64,
+    resolution: usize,
 }
 
 impl ThalwegGenerator {
     pub fn from_points(points: Vec<Bathymetry>, resolution: usize) -> Self {
+        let max_depth = points
+            .iter()
+            .map(Bathymetry::depth)
+            .reduce(f64::max)
+            .unwrap_or(0.0);
         Self {
             points: RTree::bulk_load(points),
-            resolution: resolution as f64,
+            max_depth,
+            resolution,
         }
     }
 
@@ -28,12 +35,13 @@ impl ThalwegGenerator {
         let sink_in_tree = self.points.nearest_neighbor(&sink)?;
 
         // RTree uses distance^2 in locate_within_distance
-        let distance_squared = self.resolution * self.resolution;
+        let distance_squared = (self.resolution * self.resolution) as f64;
 
         let mut state = HashMap::new();
         state.insert(source_in_tree, (0.0, source_in_tree));
         let mut work_queue = PriorityQueue::new();
         work_queue.push(source_in_tree, Reverse(0));
+        let mut weights = HashMap::new();
 
         while let Some((current, _)) = work_queue.pop() {
             let distance_to_here = state.get(current).map(|&(d, _)| d).unwrap_or(f64::INFINITY);
@@ -42,8 +50,11 @@ impl ThalwegGenerator {
                 .points
                 .locate_within_distance(current.point(), distance_squared)
             {
-                // use A* names to make comparison easier
-                let g_n = distance_to_here + 1.0;
+                // use A* names for to make comparison easier
+                let g_n = distance_to_here
+                    + *weights
+                        .entry(neighbor)
+                        .or_insert_with_key(|key| self.weight_of(key));
                 let old_distance = state
                     .get(&neighbor)
                     .map(|&(d, _)| d)
@@ -82,6 +93,11 @@ impl ThalwegGenerator {
 
         path.reverse();
         Some(path)
+    }
+
+    fn weight_of(&self, point: &Bathymetry) -> f64 {
+        let scale = 100.0;
+        (self.max_depth - point.depth() + scale) / scale
     }
 
     pub fn sink(&self, points: &[Bathymetry]) -> Vec<Bathymetry> {
@@ -126,7 +142,7 @@ impl ThalwegGenerator {
     pub fn shrink(&self, points: &[Bathymetry]) -> Vec<Bathymetry> {
         let mut out = vec![];
 
-        let factor = self.resolution / 2.0;
+        let factor = (self.resolution / 2) as f64;
 
         if let Some(point) = points.first() {
             out.push(point.clone());
@@ -148,7 +164,7 @@ impl ThalwegGenerator {
         let mut out = vec![];
         let path: LineString<f64> = points.iter().map(|p| p.point()).collect();
         for section in 0..=(self.resolution as usize) {
-            let fraction = (section as f64) / self.resolution;
+            let fraction = (section as f64) / (self.resolution as f64);
             if let Some(point) = path
                 .line_interpolate_point(fraction)
                 .and_then(|p| self.points.nearest_neighbor(&p.x_y()))
@@ -197,7 +213,7 @@ mod tests {
     }
 
     #[test]
-    fn thalweg_provides_a_path_ignoring_depth() {
+    fn thalweg_provides_a_path() {
         let km = 1000.0;
         let one_second = 1.0 / 3600.0;
         let data = vec![
@@ -211,7 +227,7 @@ mod tests {
             Bathymetry::new(1.0 * one_second, 0.0 * one_second, 6.0 * km),
             Bathymetry::new(1.0 * one_second, 1.0 * one_second, 100.0 * km),
         ];
-        let expected = vec![data[0].clone(), data[4].clone(), data[8].clone()];
+        let expected = vec![data[0].clone(), data[1].clone(), data[5].clone(), data[8].clone()];
         let generator = ThalwegGenerator::from_points(data, 50);
         let path = generator.thalweg(
             expected.first().unwrap().point(),
