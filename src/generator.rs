@@ -15,10 +15,11 @@ pub struct ThalwegGenerator {
     points: RTree<Bathymetry>,
     max_depth: f64,
     resolution: usize,
+    weighted: bool,
 }
 
 impl ThalwegGenerator {
-    pub fn from_points(points: Vec<Bathymetry>, resolution: usize) -> Self {
+    pub fn new(points: Vec<Bathymetry>, resolution: usize, weighted: bool) -> Self {
         let max_depth = points
             .iter()
             .map(Bathymetry::depth)
@@ -28,6 +29,7 @@ impl ThalwegGenerator {
             points: RTree::bulk_load(points),
             max_depth,
             resolution,
+            weighted,
         }
     }
 
@@ -97,8 +99,12 @@ impl ThalwegGenerator {
     }
 
     fn weight_of(&self, point: &Bathymetry) -> f64 {
-        let scale = 100.0;
-        (self.max_depth - point.depth() + scale) / scale
+        if self.weighted {
+            let scale = 100.0;
+            (self.max_depth - point.depth() + scale) / scale
+        } else {
+            1.0
+        }
     }
 
     pub fn sink(&self, points: &[Bathymetry]) -> Vec<Bathymetry> {
@@ -193,7 +199,7 @@ mod tests {
             Bathymetry::new(0.0, 0.0, 0.0),
             Bathymetry::new(0.00001, 0.00001, 0.0),
         ];
-        let generator = ThalwegGenerator::from_points(data.clone(), 400);
+        let generator = ThalwegGenerator::new(data.clone(), 400, false);
         let path = generator.thalweg(data.first().unwrap().point(), data.last().unwrap().point());
         assert_eq!(path, Some(data));
     }
@@ -209,7 +215,7 @@ mod tests {
             Bathymetry::new(0.0, 0.0, 0.0),
             Bathymetry::new(0.00001, 0.00001, 0.0),
         ];
-        let generator = ThalwegGenerator::from_points(data, 400);
+        let generator = ThalwegGenerator::new(data, 400, false);
         let path = generator.thalweg(
             expected.first().unwrap().point(),
             expected.last().unwrap().point(),
@@ -218,7 +224,7 @@ mod tests {
     }
 
     #[test]
-    fn thalweg_provides_a_path() {
+    fn thalweg_weighted_provides_a_path() {
         let km = 1000.0;
         let one_second = 1.0 / 3600.0;
         let data = vec![
@@ -233,7 +239,31 @@ mod tests {
             Bathymetry::new(1.0 * one_second, 1.0 * one_second, 100.0 * km),
         ];
         let expected = vec![data[0].clone(), data[1].clone(), data[5].clone(), data[8].clone()];
-        let generator = ThalwegGenerator::from_points(data, 50);
+        let generator = ThalwegGenerator::new(data, 50, true);
+        let path = generator.thalweg(
+            expected.first().unwrap().point(),
+            expected.last().unwrap().point(),
+        );
+        assert_eq!(path, Some(expected));
+    }
+
+    #[test]
+    fn thalweg_not_weighted_provides_a_path_regardless_of_weight() {
+        let km = 1000.0;
+        let one_second = 1.0 / 3600.0;
+        let data = vec![
+            Bathymetry::new(-1.0 * one_second, -1.0 * one_second, 140.0 * km),
+            Bathymetry::new(-1.0 * one_second, 0.0 * one_second, 150.0 * km),
+            Bathymetry::new(-1.0 * one_second, 1.0 * one_second, 100.0 * km),
+            Bathymetry::new(0.0 * one_second, -1.0 * one_second, 100.0 * km),
+            Bathymetry::new(0.0 * one_second, 0.0 * one_second, 9.0 * km),
+            Bathymetry::new(0.0 * one_second, 1.0 * one_second, 140.0 * km),
+            Bathymetry::new(1.0 * one_second, -1.0 * one_second, 5.0 * km),
+            Bathymetry::new(1.0 * one_second, 0.0 * one_second, 6.0 * km),
+            Bathymetry::new(1.0 * one_second, 1.0 * one_second, 100.0 * km),
+        ];
+        let expected = vec![data[0].clone(), data[4].clone(), data[8].clone()];
+        let generator = ThalwegGenerator::new(data, 50, false);
         let path = generator.thalweg(
             expected.first().unwrap().point(),
             expected.last().unwrap().point(),
@@ -257,7 +287,7 @@ mod tests {
             Bathymetry::new(1.0 * one_second, 1.0 * one_second, 100.0 * km),
         ];
         let input = vec![data[0].clone(), data[4].clone(), data[8].clone()];
-        let generator = ThalwegGenerator::from_points(data, 50);
+        let generator = ThalwegGenerator::new(data, 50, false);
         let path = generator.sink(&input);
         assert_eq!(path.len(), input.len());
     }
@@ -295,7 +325,7 @@ mod tests {
         ];
         let input = vec![data[0].clone(), data[12].clone(), data[24].clone()];
         let expected = vec![data[0].clone(), data[7].clone(), data[24].clone()];
-        let generator = ThalwegGenerator::from_points(data, 50);
+        let generator = ThalwegGenerator::new(data, 50, false);
         let path = generator.sink(&input);
         assert_eq!(path, expected);
     }
@@ -309,7 +339,7 @@ mod tests {
             Bathymetry::new(0.0 * one_second, 0.0 * one_second, 9.0 * km),
             Bathymetry::new(1.0 * one_second, 1.0 * one_second, 100.0 * km),
         ];
-        let generator = ThalwegGenerator::from_points(vec![], 40);
+        let generator = ThalwegGenerator::new(vec![], 40, false);
         let new_path = generator.shrink(&input);
         for point in new_path {
             assert!(input.iter().any(|elem| *elem == point));
@@ -325,7 +355,7 @@ mod tests {
             Bathymetry::new(0.0 * one_second, 0.0 * one_second, 9.0 * km),
             Bathymetry::new(1.0 * one_second, 1.0 * one_second, 100.0 * km),
         ];
-        let generator = ThalwegGenerator::from_points(vec![], 100);
+        let generator = ThalwegGenerator::new(vec![], 100, false);
         let new_path = generator.shrink(&input);
         assert!(new_path.len() < input.len());
     }
@@ -368,7 +398,7 @@ mod tests {
             data[18].clone(),
             data[24].clone(),
         ];
-        let generator = ThalwegGenerator::from_points(data, 50);
+        let generator = ThalwegGenerator::new(data, 50, false);
         let path = generator.populate(&input);
         assert_eq!(path, input);
     }
@@ -416,7 +446,7 @@ mod tests {
             data[18].clone(),
             data[24].clone(),
         ];
-        let generator = ThalwegGenerator::from_points(data, 50);
+        let generator = ThalwegGenerator::new(data, 50, false);
         let path = generator.populate(&input);
         assert_eq!(path, expected);
     }

@@ -36,6 +36,10 @@ struct Args {
     /// Skip adding resolution to final thalweg
     #[clap(short, long)]
     sparse: bool,
+
+    /// Attempt a best first guess by using depths in bathymetry as weights
+    #[clap(short, long)]
+    weighted: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -68,7 +72,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let mut full_path = vec![];
-    let generator = ThalwegGenerator::from_points(data, args.resolution);
+    let generator = ThalwegGenerator::new(data, args.resolution, args.weighted);
     for ends in corners.windows(2) {
         let source = *ends.first().expect("no source");
         let sink = *ends.last().expect("no sink");
