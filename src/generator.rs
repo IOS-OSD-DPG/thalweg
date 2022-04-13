@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use geo::algorithm::geodesic_length::GeodesicLength;
 use geo::algorithm::line_interpolate_point::LineInterpolatePoint;
-use geo::LineString;
+use geo::{Line, LineString};
 
 use priority_queue::PriorityQueue;
 
@@ -107,6 +107,16 @@ impl ThalwegGenerator {
         }
     }
 
+    pub fn from_path(&self, points: &[Point]) -> Vec<Bathymetry> {
+        let mut out = vec![];
+        for point in points {
+            if let Some(elem) = self.points.nearest_neighbor(&point) {
+                out.push(elem.clone());
+            }
+        }
+        out
+    }
+
     pub fn sink(&self, points: &[Bathymetry]) -> Vec<Bathymetry> {
         let mut out = vec![];
 
@@ -122,7 +132,7 @@ impl ThalwegGenerator {
             let dist_2 = current.distance_to(next);
             let dist = f64::min(dist_1, dist_2);
             // avoid overlapping with neighbors
-            let resolution = dist / 2.0;
+            let resolution = f64::min(dist / 2.0, self.resolution as f64);
             // RTree uses distance^2 in locate_within_distance
             let distance_squared = resolution * resolution;
 
@@ -184,6 +194,23 @@ impl ThalwegGenerator {
                     out.push(point.clone());
                 }
             }
+        }
+        out
+    }
+
+    pub fn add_midpoints(&self, points: &[Bathymetry]) -> Vec<Bathymetry> {
+        let mut out = vec![];
+        for window in points.windows(2) {
+            let a = window[0].clone();
+            let b = window[1].clone();
+            let line = Line::new(a.point(), b.point());
+
+            out.push(a);
+            if let Some(point) = line.line_interpolate_point(0.5).and_then(|p| self.points.nearest_neighbor(&p.x_y())) {
+                out.push(point.clone());
+            }
+            out.push(b);
+            out.dedup();
         }
         out
     }
@@ -448,6 +475,48 @@ mod tests {
         ];
         let generator = ThalwegGenerator::new(data, 50, false);
         let path = generator.populate(&input);
+        assert_eq!(path, expected);
+    }
+
+    #[test]
+    fn add_midpoints_takes_from_data() {
+        let one_second = 1.0 / 3600.0;
+        let data = vec![
+            Bathymetry::new(-1.0 * one_second, -1.0 * one_second, 140.0),
+            Bathymetry::new(-1.0 * one_second, 0.0 * one_second, 150.0),
+            Bathymetry::new(-1.0 * one_second, 1.0 * one_second, 100.0),
+            Bathymetry::new(0.0 * one_second, -1.0 * one_second, 100.0),
+            Bathymetry::new(0.0 * one_second, 0.0 * one_second, 9.0),
+            Bathymetry::new(0.0 * one_second, 1.0 * one_second, 140.0),
+            Bathymetry::new(1.0 * one_second, -1.0 * one_second, 5.0),
+            Bathymetry::new(1.0 * one_second, 0.0 * one_second, 6.0),
+            Bathymetry::new(1.0 * one_second, 1.0 * one_second, 100.0),
+        ];
+        let expected = vec![data[0].clone(), data[4].clone(), data[8].clone()];
+        let input = vec![data[0].clone(), data[8].clone()];
+        let generator = ThalwegGenerator::new(data, 50, false);
+        let path = generator.add_midpoints(&input);
+        assert_eq!(path, expected);
+    }
+
+    #[test]
+    fn from_path_pulls_from_data() {
+        let one_second = 1.0 / 3600.0;
+        let data = vec![
+            Bathymetry::new(-1.0 * one_second, -1.0 * one_second, 140.0),
+            Bathymetry::new(-1.0 * one_second, 0.0 * one_second, 150.0),
+            Bathymetry::new(-1.0 * one_second, 1.0 * one_second, 100.0),
+            Bathymetry::new(0.0 * one_second, -1.0 * one_second, 100.0),
+            Bathymetry::new(0.0 * one_second, 0.0 * one_second, 9.0),
+            Bathymetry::new(0.0 * one_second, 1.0 * one_second, 140.0),
+            Bathymetry::new(1.0 * one_second, -1.0 * one_second, 5.0),
+            Bathymetry::new(1.0 * one_second, 0.0 * one_second, 6.0),
+            Bathymetry::new(1.0 * one_second, 1.0 * one_second, 100.0),
+        ];
+        let input = vec![data[0].point(), data[4].point(), data[8].point()];
+        let expected = vec![data[0].clone(), data[4].clone(), data[8].clone()];
+        let generator = ThalwegGenerator::new(data, 50, false);
+        let path = generator.from_path(&input);
         assert_eq!(path, expected);
     }
 }
