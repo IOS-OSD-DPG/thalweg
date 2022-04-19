@@ -88,11 +88,7 @@ fn to_geojson(input: &[Bathymetry]) -> String {
         joined += ",";
         joined += elem.as_str();
     }
-    String::from("{")
-        + "\"type\":\"LineString\",\"coordinates\":["
-        + joined.as_str()
-        + "]"
-        + "}"
+    String::from("{") + "\"type\":\"LineString\",\"coordinates\":[" + joined.as_str() + "]" + "}"
 }
 
 #[cfg(test)]

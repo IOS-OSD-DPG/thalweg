@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 use geo::algorithm::geodesic_length::GeodesicLength;
 use geo::algorithm::line_interpolate_point::LineInterpolatePoint;
+use geo::algorithm::simplifyvw::SimplifyVWPreserve;
 use geo::{Line, LineString};
 
 use priority_queue::PriorityQueue;
@@ -206,13 +207,24 @@ impl ThalwegGenerator {
             let line = Line::new(a.point(), b.point());
 
             out.push(a);
-            if let Some(point) = line.line_interpolate_point(0.5).and_then(|p| self.points.nearest_neighbor(&p.x_y())) {
+            if let Some(point) = line
+                .line_interpolate_point(0.5)
+                .and_then(|p| self.points.nearest_neighbor(&p.x_y()))
+            {
                 out.push(point.clone());
             }
             out.push(b);
             out.dedup();
         }
         out
+    }
+
+    pub fn simplify(&self, points: &[Bathymetry]) -> Vec<Bathymetry> {
+        let epsilon = 1.0 / 3600.0 / 5.0;
+        let path: LineString<f64> = points.iter().map(|p| p.point()).collect();
+        let new_path = path.simplifyvw_preserve(&epsilon);
+        let path_vec: Vec<(f64, f64)> = new_path.coords().map(|c| c.x_y()).collect();
+        self.from_path(&path_vec)
     }
 }
 
@@ -265,7 +277,12 @@ mod tests {
             Bathymetry::new(1.0 * one_second, 0.0 * one_second, 6.0 * km),
             Bathymetry::new(1.0 * one_second, 1.0 * one_second, 100.0 * km),
         ];
-        let expected = vec![data[0].clone(), data[1].clone(), data[5].clone(), data[8].clone()];
+        let expected = vec![
+            data[0].clone(),
+            data[1].clone(),
+            data[5].clone(),
+            data[8].clone(),
+        ];
         let generator = ThalwegGenerator::new(data, 50, true);
         let path = generator.thalweg(
             expected.first().unwrap().point(),
@@ -431,8 +448,7 @@ mod tests {
     }
 
     #[test]
-    fn populate_adds_all_possible_points_along_the_line()
-    {
+    fn populate_adds_all_possible_points_along_the_line() {
         let km = 1000.0;
         let one_second = 1.0 / 3600.0;
         let data = vec![
@@ -462,10 +478,7 @@ mod tests {
             Bathymetry::new(2.0 * one_second, 1.0 * one_second, 100.0 * km),
             Bathymetry::new(2.0 * one_second, 2.0 * one_second, 5.0 * km),
         ];
-        let input = vec![
-            data[0].clone(),
-            data[24].clone(),
-        ];
+        let input = vec![data[0].clone(), data[24].clone()];
         let expected = vec![
             data[0].clone(),
             data[6].clone(),

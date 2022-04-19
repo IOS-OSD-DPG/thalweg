@@ -4,6 +4,7 @@ use std::fs::{self, File};
 use std::io::{BufReader, Write};
 use std::path::PathBuf;
 
+use thalweg::bathymetry::Bathymetry;
 use thalweg::format::{self, OutputFormat};
 use thalweg::generator::ThalwegGenerator;
 use thalweg::read;
@@ -103,28 +104,18 @@ fn main() -> Result<(), Box<dyn Error>> {
                     full_path.append(&mut path);
                 } else {
                     return Err(Box::<dyn Error>::from(format!(
-                                "No path found between {:?} and {:?}",
-                                source, sink
+                        "No path found between {:?} and {:?}",
+                        source, sink
                     )));
                 }
             }
-            println!("path contians {} points", full_path.len());
-            let mut current_path = full_path;
-            let path = loop {
-                // find fixed-point thalweg - mostly in an attempt to ensure the thalweg does not pass over land
-                let new_path = generator.sink(&current_path);
-                if new_path == current_path {
-                    break current_path;
-                }
-                // combine points that are too close and may produce strange paths on further sink steps
-                current_path = generator.shrink(&new_path);
-            };
-            path
-        },
+            println!("path contains {} points", full_path.len());
+            improve(&full_path, &generator)
+        }
         Commands::FromPath => {
             // points represents a full path along the inlet
             generator.from_path(&points)
-        },
+        }
     };
 
     let path = if !cli.args.sparse {
@@ -145,4 +136,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     file.write_all(path_vec.as_bytes())?;
 
     Ok(())
+}
+
+fn improve(path: &[Bathymetry], generator: &ThalwegGenerator) -> Vec<Bathymetry> {
+    let mut current_path = generator.add_midpoints(&path);
+    loop {
+        // find fixed-point thalweg - mostly in an attempt to ensure the thalweg does not pass over land
+        let new_path = generator.sink(&current_path);
+        if new_path == current_path {
+            break generator.simplify(&current_path);
+        }
+        // combine points that are too close and may produce strange paths on further sink steps
+        current_path = generator.shrink(&new_path);
+    }
 }

@@ -80,7 +80,9 @@ fn from_feature(input: &json::JsonValue) -> Result<Vec<Bathymetry>, Box<dyn Erro
 fn from_line_string(input: &json::JsonValue) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
     let mut out = vec![];
     if input["type"] != "LineString" {
-        return Err(Box::<dyn Error>::from("Thalweg can only be constructed from a LineString object"));
+        return Err(Box::<dyn Error>::from(
+            "Thalweg can only be constructed from a LineString object",
+        ));
     }
     let coordinates = &input["coordinates"];
     if coordinates.is_null() {
