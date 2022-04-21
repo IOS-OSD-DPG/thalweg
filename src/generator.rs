@@ -111,7 +111,7 @@ impl ThalwegGenerator {
     pub fn from_path(&self, points: &[Point]) -> Vec<Bathymetry> {
         let mut out = vec![];
         for point in points {
-            if let Some(elem) = self.points.nearest_neighbor(&point) {
+            if let Some(elem) = self.points.nearest_neighbor(point) {
                 out.push(elem.clone());
             }
         }
