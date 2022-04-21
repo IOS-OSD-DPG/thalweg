@@ -31,6 +31,10 @@ enum Commands {
 // Arguments for generate
 #[derive(Args, Debug)]
 struct GenerateArgs {
+    /// Number of times to apply improvement step
+    #[clap(long, default_value_t = 1)]
+    rounds: usize,
+
     /// Whether or not to simplify the generated thalweg
     #[clap(long)]
     simplify: bool,
@@ -100,12 +104,14 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
             }
             println!("path contains {} points", full_path.len());
-            let path = improve(&full_path, &generator, args.simplify);
+            for _ in 0..args.rounds {
+                full_path = improve(&full_path, &generator, args.simplify);
+            }
             let path = if !args.sparse {
                 println!("Increasing density of path");
-                generator.populate(&path)
+                generator.populate(&full_path)
             } else {
-                path
+                full_path
             };
             (path, args.common.clone())
         }
