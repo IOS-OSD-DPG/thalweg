@@ -1,10 +1,8 @@
 use crate::bathymetry::Bathymetry;
-use crate::parse;
 use crate::read::bathymetry;
 
-use std::collections::HashMap;
 use std::error::Error;
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufReader, Read};
 
 use json;
 
@@ -15,44 +13,7 @@ pub fn from_nonna<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Bathymetry>, 
 
 /// Read thalweg data from a CSV
 pub fn from_csv<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
-    let mut out = vec![];
-    let mut buffer = String::new();
-    // read header
-    if input.read_line(&mut buffer)? == 0 {
-        return Ok(out);
-    }
-    let mut column_map = HashMap::new();
-    for (index, item) in buffer.split(',').enumerate() {
-        column_map.insert(item.trim().trim_matches('"'), index);
-    }
-    let latitude_index = *column_map
-        .keys()
-        .find(|name| name.to_lowercase().starts_with("la"))
-        .and_then(|key| column_map.get(key))
-        .ok_or("Latitude not found")?;
-    let longitude_index = *column_map
-        .keys()
-        .find(|name| name.to_lowercase().starts_with("lo"))
-        .and_then(|key| column_map.get(key))
-        .ok_or("Longitude not found")?;
-    let depth_index = *column_map
-        .keys()
-        .find(|name| name.to_lowercase().starts_with("depth"))
-        .and_then(|key| column_map.get(key))
-        .ok_or("Depth not found")?;
-    loop {
-        buffer.clear();
-        if input.read_line(&mut buffer)? == 0 {
-            break Ok(out);
-        }
-        let row: Vec<&str> = buffer.split(',').collect();
-        let latitude = parse::parse_float(row[latitude_index]);
-        let longitude = parse::parse_float(row[longitude_index]);
-        let depth = parse::parse_float(row[depth_index]);
-        if let Some(((lat, lon), dep)) = latitude.zip(longitude).zip(depth) {
-            out.push(Bathymetry::new(lat, lon, dep));
-        }
-    }
+    bathymetry::from_csv(input)
 }
 
 /// Read thalweg data from GeoJSON

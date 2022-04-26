@@ -142,9 +142,16 @@ fn read_bathymetry_data<T: AsRef<Path>>(dir: &T) -> Result<Vec<Bathymetry>, Box<
     let mut data = vec![];
     for entry in fs::read_dir(dir)? {
         let file_name = entry?.path();
-        let file = File::open(file_name)?;
+        let file = File::open(&file_name)?;
         let mut reader = BufReader::new(file);
-        data.extend(read::bathymetry::from_nonna(&mut reader)?);
+        if let Some(ext) = file_name.extension() {
+            match ext.to_str() {
+                Some("txt") => data.extend(read::bathymetry::from_nonna(&mut reader)?),
+                Some("csv") => data.extend(read::bathymetry::from_csv(&mut reader)?),
+                Some(..) => data.extend(read::bathymetry::from_nonna(&mut reader)?),
+                None => data.extend(read::bathymetry::from_nonna(&mut reader)?),
+            }
+        }
     }
     Ok(data.into_iter().filter(|bath| bath.depth() > 0.0).collect())
 }
