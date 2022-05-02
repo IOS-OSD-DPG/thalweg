@@ -134,7 +134,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 None
             };
             let data = read_bathymetry_data(&args.common.data, bb)?;
-            let points = read_corner_data(&args.common.points)?;
+            let points = read_path_data(&args.common.points)?;
             let generator = ThalwegGenerator::new(data, args.common.resolution, false);
             let path = generator.from_path(&points);
             (generator.populate(&path), args.common.clone())
@@ -179,6 +179,23 @@ fn read_corner_data<T: AsRef<Path>>(file: &T) -> Result<Vec<Point>, Box<dyn Erro
         match ext.to_str() {
             Some("txt") => read::point::from_nonna(&mut reader),
             Some("csv") => read::point::from_csv(&mut reader),
+            Some("geojson") => read::point::from_geojson(&mut reader),
+            Some(..) => Ok(vec![]),
+            None => Ok(vec![]),
+        }
+    } else {
+        read::point::from_nonna(&mut reader)
+    }
+}
+
+fn read_path_data<T: AsRef<Path>>(file: &T) -> Result<Vec<Point>, Box<dyn Error>> {
+    let points = File::open(file)?;
+    let mut reader = BufReader::new(points);
+    if let Some(ext) = file.as_ref().extension() {
+        match ext.to_str() {
+            Some("txt") => read::point::from_nonna(&mut reader),
+            Some("csv") => read::point::from_csv(&mut reader),
+            Some("geojson") => read::point::from_geojson_line(&mut reader),
             Some(..) => Ok(vec![]),
             None => Ok(vec![]),
         }
