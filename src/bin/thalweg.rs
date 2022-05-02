@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::fs::{self, File};
 use std::io::{BufReader, Write};
 use std::path::{Path, PathBuf};
@@ -7,9 +7,11 @@ use std::path::{Path, PathBuf};
 use thalweg::bathymetry::{Bathymetry, Point};
 use thalweg::format::{self, OutputFormat};
 use thalweg::generator::ThalwegGenerator;
-use thalweg::read;
+use thalweg::{read, parse};
 
 use clap::{Args, Parser, Subcommand};
+
+use geo::Polygon;
 
 /// Generate a thalweg of an inlet
 #[derive(Parser, Debug)]
@@ -79,6 +81,10 @@ struct CommonArgs {
     /// Resolution of desired thalweg in metres
     #[clap(short, long, default_value_t = 1000)]
     resolution: usize,
+
+    /// Bounding box to limit data used in processing
+    #[clap(short, long)]
+    boundingbox: Option<OsString>,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -87,7 +93,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (path, args) = match &cli.command {
         Commands::Generate(args) => {
             // points represents points of interest along the inlet
-            let data = read_bathymetry_data(&args.common.data)?;
+            let bb = if let Some(bb) = &args.common.boundingbox {
+                parse::parse_bounding_box(to_utf8(bb)?)
+            } else {
+                None
+            };
+            let data = read_bathymetry_data(&args.common.data, bb)?;
             let points = read_corner_data(&args.common.points)?;
             let generator = ThalwegGenerator::new(data, args.common.resolution, args.weighted);
             let mut full_path = vec![];
@@ -117,7 +128,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         Commands::FromPath(args) => {
             // points represents a full path along the inlet
-            let data = read_bathymetry_data(&args.common.data)?;
+            let bb = if let Some(bb) = &args.common.boundingbox {
+                parse::parse_bounding_box(to_utf8(bb)?)
+            } else {
+                None
+            };
+            let data = read_bathymetry_data(&args.common.data, bb)?;
             let points = read_corner_data(&args.common.points)?;
             let generator = ThalwegGenerator::new(data, args.common.resolution, false);
             let path = generator.from_path(&points);
@@ -138,7 +154,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn read_bathymetry_data<T: AsRef<Path>>(dir: &T) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
+fn read_bathymetry_data<T: AsRef<Path>>(dir: &T, bb: Option<Polygon<f64>>) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
     let mut data = vec![];
     for entry in fs::read_dir(dir)? {
         let file_name = entry?.path();
@@ -146,10 +162,10 @@ fn read_bathymetry_data<T: AsRef<Path>>(dir: &T) -> Result<Vec<Bathymetry>, Box<
         let mut reader = BufReader::new(file);
         if let Some(ext) = file_name.extension() {
             match ext.to_str() {
-                Some("txt") => data.extend(read::bathymetry::from_nonna(&mut reader)?),
-                Some("csv") => data.extend(read::bathymetry::from_csv(&mut reader)?),
-                Some(..) => data.extend(read::bathymetry::from_nonna(&mut reader)?),
-                None => data.extend(read::bathymetry::from_nonna(&mut reader)?),
+                Some("txt") => data.extend(read::bathymetry::from_nonna(&mut reader, &bb)?),
+                Some("csv") => data.extend(read::bathymetry::from_csv(&mut reader, &bb)?),
+                Some(..) => data.extend(read::bathymetry::from_nonna(&mut reader, &bb)?),
+                None => data.extend(read::bathymetry::from_nonna(&mut reader, &bb)?),
             }
         }
     }
@@ -186,4 +202,8 @@ fn improve(path: &[Bathymetry], generator: &ThalwegGenerator, simplify: bool) ->
         // combine points that are too close and may produce strange paths on further sink steps
         current_path = generator.shrink(&new_path);
     }
+}
+
+fn to_utf8(input: &OsStr) -> Result<&str, Box::<dyn Error>> {
+    input.to_str().ok_or_else(|| Box::<dyn Error>::from(format!("{:?} is not valid utf-8", input)))
 }

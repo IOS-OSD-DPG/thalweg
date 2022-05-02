@@ -1,3 +1,5 @@
+use geo::{LineString, Polygon};
+
 pub fn parse_dms_latitude(latitude: &str) -> Option<f64> {
     let trimmed_lat = trim_last(latitude);
     if latitude.ends_with(is_north) {
@@ -22,6 +24,28 @@ pub fn parse_dms_longitude(longitude: &str) -> Option<f64> {
 
 pub fn parse_float(input: &str) -> Option<f64> {
     input.trim().parse::<f64>().ok()
+}
+
+pub fn parse_bounding_box(input: &str) -> Option<Polygon<f64>> {
+    let coll: Vec<Option<f64>> = input.split(',')
+         .take(4)
+         .map(parse_float)
+         .collect();
+    if coll.len() < 4 || coll.iter().any(|o| o.is_none()) {
+        None
+    } else {
+        let output = Polygon::new(
+            LineString::from(vec![
+                (coll[0].unwrap(), coll[1].unwrap()),
+                (coll[2].unwrap(), coll[1].unwrap()),
+                (coll[2].unwrap(), coll[3].unwrap()),
+                (coll[0].unwrap(), coll[3].unwrap()),
+                (coll[0].unwrap(), coll[1].unwrap())
+            ]),
+            vec![],
+        );
+        Some(output)
+    }
 }
 
 fn trim_last(input: &str) -> &str {
@@ -98,5 +122,28 @@ mod tests {
     #[test]
     fn rejects_improper_float() {
         assert_eq!(parse_float("not a float"), None);
+    }
+
+    #[test]
+    fn reads_bounding_box() {
+        let outline = vec![
+            (-123.4, 54.3),
+            (-123.9, 54.3),
+            (-123.9, 55.0),
+            (-123.4, 55.0),
+            (-123.4, 54.3),
+        ];
+        let expected = Polygon::new(
+            LineString::from(outline),
+            vec![]
+        );
+        assert_eq!(parse_bounding_box("-123.4,54.3,-123.9,55.0"), Some(expected));
+    }
+
+    #[test]
+    fn rejects_invalid_box() {
+        assert_eq!(parse_bounding_box("not a bounding box"), None);
+        assert_eq!(parse_bounding_box("-123.4"), None);
+        assert_eq!(parse_bounding_box("-123.4,missing,-123.9,55.0"), None);
     }
 }

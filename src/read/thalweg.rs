@@ -8,12 +8,12 @@ use json;
 
 /// Read thalweg data from the NONNA-10 ASCII format
 pub fn from_nonna<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
-    bathymetry::from_nonna(input)
+    bathymetry::from_nonna(input, &None)
 }
 
 /// Read thalweg data from a CSV
 pub fn from_csv<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
-    bathymetry::from_csv(input)
+    bathymetry::from_csv(input, &None)
 }
 
 /// Read thalweg data from GeoJSON

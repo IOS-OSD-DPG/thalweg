@@ -5,8 +5,11 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::io::{BufRead, BufReader, Read};
 
+use geo::{Coordinate, Point, Polygon};
+use geo::algorithm::contains::Contains;
+
 /// Read bathymetry data from the NONNA-10 ASCII format
-pub fn from_nonna<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
+pub fn from_nonna<T: Read>(input: &mut BufReader<T>, bb: &Option<Polygon<f64>>) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
     let mut out = vec![];
     let mut buffer = String::new();
     loop {
@@ -15,7 +18,11 @@ pub fn from_nonna<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Bathymetry>, 
             break Ok(out);
         }
         if let Some(value) = nonna_line(&buffer) {
-            out.push(value);
+            // use Option::iter to avoid consuming bb
+            // Iterator::all returns true on empty iterator
+            if bb.iter().all(|b| b.contains(&Coordinate::from(value.point()))) {
+                out.push(value);
+            }
         }
     }
 }
@@ -28,7 +35,7 @@ fn nonna_line(input: &str) -> Option<Bathymetry> {
     Some(Bathymetry::new(latitude, longitude, depth))
 }
 
-pub fn from_csv<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
+pub fn from_csv<T: Read>(input: &mut BufReader<T>, bb: &Option<Polygon<f64>>) -> Result<Vec<Bathymetry>, Box<dyn Error>> {
     let mut out = vec![];
     let mut buffer = String::new();
     // read header
@@ -78,7 +85,11 @@ pub fn from_csv<T: Read>(input: &mut BufReader<T>) -> Result<Vec<Bathymetry>, Bo
             unreachable!()
         };
         if let Some(((lat, lon), dep)) = latitude.zip(longitude).zip(depth) {
-            out.push(Bathymetry::new(lat, lon, dep));
+            // use Option::iter to avoid consuming bb
+            // Iterator::all returns true on empty iterator
+            if bb.iter().all(|b| b.contains(&Point::new(lon, lat))) {
+                out.push(Bathymetry::new(lat, lon, dep));
+            }
         }
     }
 }
@@ -91,7 +102,7 @@ mod tests {
     fn reads_bathymetry_lines() {
         let source = "0-0-0.0N 0-0-0.0E 0.0";
         let mut reader = BufReader::new(source.as_bytes());
-        let actual = from_nonna(&mut reader);
+        let actual = from_nonna(&mut reader, &None);
         let expected = vec![Bathymetry::new(0.0, 0.0, 0.0)];
         assert!(actual.is_ok());
         assert_eq!(actual.unwrap(), expected);
@@ -101,7 +112,7 @@ mod tests {
     fn reads_multiple_bathymetry_lines() {
         let source = "0-0-0.0N 0-0-0.0E 0.0\n0-0-0.0N 0-0-0.0E 0.0";
         let mut reader = BufReader::new(source.as_bytes());
-        let actual = from_nonna(&mut reader);
+        let actual = from_nonna(&mut reader, &None);
         let expected = vec![
             Bathymetry::new(0.0, 0.0, 0.0),
             Bathymetry::new(0.0, 0.0, 0.0),
@@ -114,7 +125,7 @@ mod tests {
     fn ignores_non_bathymetry_lines() {
         let source = "not actual bathymetry\n0-0-0.0N 0-0-0.0E 0.0";
         let mut reader = BufReader::new(source.as_bytes());
-        let actual = from_nonna(&mut reader);
+        let actual = from_nonna(&mut reader, &None);
         let expected = vec![Bathymetry::new(0.0, 0.0, 0.0)];
         assert!(actual.is_ok());
         assert_eq!(actual.unwrap(), expected);
@@ -124,7 +135,7 @@ mod tests {
     fn reads_bathymetry_from_csv() {
         let source = "longitude,latitude,depth\n-123.456,49.58,100.0";
         let mut reader = BufReader::new(source.as_bytes());
-        let actual = from_csv(&mut reader);
+        let actual = from_csv(&mut reader, &None);
         let expected = vec![Bathymetry::new(49.58, -123.456, 100.0)];
         assert!(actual.is_ok());
         assert_eq!(actual.unwrap(), expected);
@@ -134,7 +145,7 @@ mod tests {
     fn reads_bathymetry_from_csv_with_elevation() {
         let source = "longitude,latitude,elevation\n-123.456,49.58,-100.0";
         let mut reader = BufReader::new(source.as_bytes());
-        let actual = from_csv(&mut reader);
+        let actual = from_csv(&mut reader, &None);
         let expected = vec![Bathymetry::new(49.58, -123.456, 100.0)];
         assert!(actual.is_ok());
         assert_eq!(actual.unwrap(), expected);
